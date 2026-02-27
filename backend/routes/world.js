@@ -1,0 +1,26 @@
+const express = require('express');
+const axios = require('axios');
+const router = express.Router();
+
+const Destination = require('../models/Destination');
+
+// Fetch destinations from MongoDB
+router.get('/destinations', async (req, res) => {
+  try {
+    const destinations = await Destination.find({});
+    res.json(destinations);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch destinations', error: err.message });
+  }
+});
+
+// Example: Demo trips endpoint (static for now)
+router.get('/trips', (req, res) => {
+  res.json([
+    { id: 1, name: 'European Explorer', countries: ['FR', 'DE', 'IT'], price: 1200 },
+    { id: 2, name: 'Asian Adventure', countries: ['JP', 'TH', 'VN'], price: 1500 },
+    { id: 3, name: 'American Roadtrip', countries: ['US', 'CA', 'MX'], price: 1800 },
+  ]);
+});
+
+module.exports = router;

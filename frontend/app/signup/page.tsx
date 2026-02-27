@@ -1,0 +1,170 @@
+"use client"
+
+import { useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Globe, ArrowLeft, Loader2 } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
+import { api } from "@/lib/api" // Import the API helper we just created
+
+export default function SignupPage() {
+    const router = useRouter()
+    const { toast } = useToast()
+    const [isLoading, setIsLoading] = useState(false)
+    const [formData, setFormData] = useState({
+        name: "",
+        email: "",
+        password: "",
+        role: "customer"
+    })
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData({ ...formData, [e.target.id]: e.target.value })
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setIsLoading(true)
+
+        try {
+            await api.auth.register(formData)
+
+            toast({
+                title: "Account created!",
+                description: "You have successfully registered. Please sign in.",
+            })
+
+            // Redirect to login page after successful registration
+            router.push("/login")
+        } catch (error: any) {
+            toast({
+                variant: "destructive",
+                title: "Registration failed",
+                description: error.message || "Something went wrong. Please try again.",
+            })
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    return (
+        <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+            <Link href="/" className="absolute top-4 left-4 md:top-8 md:left-8 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                <ArrowLeft className="w-4 h-4" />
+                Back to Home
+            </Link>
+
+            <div className="w-full max-w-md space-y-8">
+                <div className="flex flex-col items-center text-center space-y-2">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-rose-400 flex items-center justify-center shadow-lg mb-4">
+                        <Globe className="w-6 h-6 text-white" />
+                    </div>
+                    <h1 className="text-2xl font-bold tracking-tight">Create an account</h1>
+                    <p className="text-muted-foreground text-sm max-w-xs">
+                        Enter your email below to create your account
+                    </p>
+                </div>
+
+                <Card className="border-border/50 shadow-xl">
+                    <CardHeader>
+                        <CardTitle>Sign Up</CardTitle>
+                        <CardDescription>
+                            Enter your information to create an account
+                        </CardDescription>
+                    </CardHeader>
+                    <form onSubmit={handleSubmit}>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Full Name</Label>
+                                <Input
+                                    id="name"
+                                    placeholder="John Doe"
+                                    required
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email</Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="m@example.com"
+                                    required
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="password">Password</Label>
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    required
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    disabled={isLoading}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Role</Label>
+                                <div className="flex items-center space-x-4 mt-2">
+                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="role"
+                                            value="customer"
+                                            checked={formData.role === "customer"}
+                                            onChange={(e) => setFormData({ ...formData, role: e.target.value as "customer" | "admin" })}
+                                            className="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary dark:focus:ring-primary dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                        />
+                                        <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Customer</span>
+                                    </label>
+                                    <label className="flex items-center space-x-2 cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="role"
+                                            value="admin"
+                                            checked={formData.role === "admin"}
+                                            onChange={(e) => setFormData({ ...formData, role: e.target.value as "customer" | "admin" })}
+                                            className="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary dark:focus:ring-primary dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                        />
+                                        <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Admin</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </CardContent>
+                        <CardFooter className="flex flex-col space-y-4">
+                            <Button
+                                type="submit"
+                                className="w-full bg-gradient-to-r from-primary to-rose-400 text-white hover:opacity-90 shadow-lg glow-primary"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Creating account...
+                                    </>
+                                ) : (
+                                    "Create account"
+                                )}
+                            </Button>
+                            <div className="text-center text-sm text-muted-foreground">
+                                Already have an account?{" "}
+                                <Link href="/login" className="text-primary hover:underline font-medium">
+                                    Sign in
+                                </Link>
+                            </div>
+                        </CardFooter>
+                    </form>
+                </Card>
+            </div>
+        </div>
+    )
+}

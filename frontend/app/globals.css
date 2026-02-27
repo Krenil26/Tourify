@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: oklch(0.55 0.15 145);
+  /* Nature Green */
+  --font-sans: 'Outfit', sans-serif;
+  --font-serif: 'Lora', serif;
+}
+
+@layer base {
+  :root {
+    /* Nature Light - Soft Parchment & Forest */
+    --background: 60 20% 98%;
+    --foreground: 140 40% 12%;
+
+    --primary: 142 60% 40%;
+    --primary-foreground: 60 20% 98%;
+
+    --secondary: 195 50% 45%;
+    --secondary-foreground: 60 20% 98%;
+
+    --accent: 35 40% 45%;
+    /* Earthy Clay */
+    --accent-foreground: 60 20% 98%;
+
+    --muted: 60 10% 90%;
+    --muted-foreground: 140 20% 40%;
+
+    --border: 140 20% 90%;
+    --input: 140 20% 90%;
+    --ring: 142 60% 40%;
+
+    --radius: 1.25rem;
+  }
+
+  .dark {
+    /* Nature Dark - Deep Night Forest */
+    --background: 145 25% 6%;
+    --foreground: 120 15% 92%;
+
+    --primary: 142 65% 55%;
+    --primary-foreground: 145 25% 6%;
+
+    --secondary: 200 60% 60%;
+    --secondary-foreground: 145 25% 6%;
+
+    --accent: 25 60% 65%;
+    /* Soft Amber/Autumn Leaf */
+    --accent-foreground: 145 25% 6%;
+
+    --muted: 145 20% 12%;
+    --muted-foreground: 140 15% 70%;
+
+    --border: 145 20% 12%;
+    --input: 145 20% 12%;
+    --ring: 142 65% 55%;
+  }
+
+  html,
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+}
+
+/* Nature Breeze Animation */
+@keyframes natureBreeze {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.nature-bg {
+  background: linear-gradient(-45deg,
+      oklch(0.2 0.05 145),
+      oklch(0.25 0.08 150),
+      oklch(0.15 0.04 160),
+      oklch(0.1 0.03 140));
+  background-size: 400% 400%;
+  animation: natureBreeze 20s ease infinite;
+}
+
+/* Morning Mist Glassmorphism */
+.glass-panel {
+  background: color-mix(in srgb, hsl(var(--background)) 5%, transparent);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  border: 1px solid color-mix(in srgb, hsl(var(--foreground)) 8%, transparent);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.4);
+}
+
+.glass-card {
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.3);
+}
+
+.text-nature-gradient {
+  background: linear-gradient(to right, #82d08c, #63b3ed, #f6ad55);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1.5rem;
+}
+
+/* Nature Accent Ornament */
+.nature-leaf {
+  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/></svg>');
+  mask-size: contain;
+  mask-repeat: no-repeat;
+}
