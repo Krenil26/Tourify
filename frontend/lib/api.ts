@@ -46,4 +46,8 @@ export const api = {
         getDestinations: () => fetchWithAuth("/world/destinations"),
         getTrips: () => fetchWithAuth("/world/trips"),
     },
+    user: {
+        getAdminStats: () => fetchWithAuth("/user/admin/stats"),
+        getCustomerStats: () => fetchWithAuth("/user/customer/stats"),
+    },
 };
