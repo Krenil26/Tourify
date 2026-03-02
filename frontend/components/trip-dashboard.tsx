@@ -24,7 +24,8 @@ import {
   User,
 } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 const upcomingTrips = [
   {
@@ -102,10 +103,38 @@ const budgetCategories = [
 ]
 
 export function TripDashboard() {
+  const router = useRouter()
   const [activeTrip, setActiveTrip] = useState(upcomingTrips[0])
+  const [user, setUser] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const stored = localStorage.getItem("user")
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored))
+      } catch (e) {
+        console.error("Failed to parse user from localStorage", e)
+      }
+      setIsLoading(false)
+    } else {
+      router.push("/login")
+    }
+  }, [router])
+
+  if (isLoading || !user) {
+    return (
+      <div className="min-h-screen pt-20 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   const totalBudget = budgetCategories.reduce((acc, cat) => acc + cat.budget, 0)
   const totalSpent = budgetCategories.reduce((acc, cat) => acc + cat.spent, 0)
+
+  // Use the user's first name, or "Explorer" if not logged in
+  const firstName = user?.name ? user.name.split(" ")[0] : "Explorer"
 
   return (
     <section className="min-h-screen pt-20 pb-12 relative">
@@ -115,7 +144,7 @@ export function TripDashboard() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 pt-8 gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">Welcome back, Alex</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">Welcome back, {firstName}</h1>
             <p className="text-muted-foreground">Track your trips and manage your travel plans</p>
           </div>
           <div className="flex gap-3 items-center">
