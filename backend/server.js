@@ -21,7 +21,11 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000', // Allow configured frontend or local
+  origin: [
+    process.env.FRONTEND_URL,
+    'https://tourifyy.vercel.app',
+    'http://localhost:3000'
+  ].filter(Boolean), // Filter out undefined values
   credentials: true
 }));
 app.use(express.json());
