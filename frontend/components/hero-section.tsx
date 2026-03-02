@@ -17,7 +17,7 @@ export function HeroSection() {
   useEffect(() => {
     const fetchDestinations = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/world/destinations")
+        const res = await fetch("https://tourify-backend-99ef.onrender.com/api/world/destinations")
         if (!res.ok) {
           console.error("Destinations API error:", res.status)
           setDestinations([])

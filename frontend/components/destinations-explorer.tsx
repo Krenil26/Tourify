@@ -40,7 +40,7 @@ export function DestinationsExplorer() {
   useEffect(() => {
     const fetchDestinations = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/world/destinations')
+        const response = await fetch('https://tourify-backend-99ef.onrender.com/api/world/destinations')
         const data = await response.json()
         setDestinations(data)
       } catch (error) {

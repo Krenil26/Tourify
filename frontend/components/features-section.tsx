@@ -23,7 +23,7 @@ export function FeaturesSection() {
   useEffect(() => {
     const fetchFeatures = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/features")
+        const res = await fetch("https://tourify-backend-99ef.onrender.com/api/features")
         if (!res.ok) {
           console.error("Features API error:", res.status)
           setFeatures([])

@@ -55,7 +55,7 @@ export function AIDemoSection() {
     setIsTyping(true)
 
     // AI Response Logic (Backend Fetch)
-    fetch("http://localhost:5000/api/spirit/chat", {
+    fetch("https://tourify-backend-99ef.onrender.com/api/spirit/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: inputValue })

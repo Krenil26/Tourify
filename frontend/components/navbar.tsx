@@ -23,7 +23,7 @@ export function Navbar() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/notifications")
+        const res = await fetch("https://tourify-backend-99ef.onrender.com/api/notifications")
         if (!res.ok) {
           console.error("Notifications API error:", res.status)
           return

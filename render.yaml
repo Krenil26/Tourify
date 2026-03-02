@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: tourify-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: MONGO_URI
+        sync: false # Set this in the Render Dashboard
+      - key: FRONTEND_URL
+        sync: false # Set this to your deployed frontend URL
+      - key: JWT_SECRET
+        sync: false # Set this in the Render Dashboard
