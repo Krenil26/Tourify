@@ -13,10 +13,17 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
         headers,
     });
 
-    const data = await response.json();
+    let data;
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+    } else {
+        const text = await response.text();
+        throw new Error(text || `Server Error (${response.status})`);
+    }
 
     if (!response.ok) {
-        throw new Error(data.message || "Something went wrong");
+        throw new Error(data?.message || `Something went wrong (${response.status})`);
     }
 
     return data;
