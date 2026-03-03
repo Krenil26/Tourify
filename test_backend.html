@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tourify Backend Diagnostic</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #0f172a; color: white; }
+        .card { background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155; }
+        button { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        .error { color: #f43f5e; }
+        .success { color: #10b981; }
+        pre { background: #000; padding: 10px; border-radius: 4px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>🛠️ Tourify Backend Test</h1>
+    
+    <div class="card">
+        <h3>1. Check Backend Connectivity</h3>
+        <p>This will try to reach your new Render backend.</p>
+        <div id="status-1">Not tested</div>
+        <button onclick="testBackend()">Test Now</button>
+    </div>
+
+    <script>
+        const NEW_URL = "https://tourify-4euu.onrender.com";
+
+        async function testBackend() {
+            const statusDiv = document.getElementById('status-1');
+            statusDiv.innerHTML = "Testing...";
+            try {
+                const res = await fetch(NEW_URL + '/');
+                const text = await res.text();
+                statusDiv.innerHTML = `<span class="success">✅ Connected! Response: ${text}</span>`;
+            } catch (err) {
+                statusDiv.innerHTML = `<span class="error">❌ Failed to connect: ${err.message}<br>
+                Make sure the URL is correct and CORS is enabled for this domain.</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

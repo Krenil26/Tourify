@@ -98,12 +98,29 @@ const travelStats = [
 export function UserProfile() {
   const [activeTab, setActiveTab] = useState("bookings")
   const [isEditing, setIsEditing] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [user, setUser] = useState({
-    name: "Alex Johnson",
-    email: "alex.johnson@email.com",
-    phone: "+1 (555) 123-4567",
-    location: "New York, USA"
+    name: "Explorer",
+    email: "email@example.com",
+    phone: "",
+    location: ""
   })
+
+  useEffect(() => {
+    const stored = localStorage.getItem("user")
+    if (stored) {
+      try {
+        const u = JSON.parse(stored)
+        setUser({
+          name: u.name || "Explorer",
+          email: u.email || "",
+          phone: u.phone || "",
+          location: u.location || ""
+        })
+      } catch (e) { console.error("Error parsing user", e) }
+    }
+    setLoading(false)
+  }, [])
 
   const [tempUser, setTempUser] = useState({ ...user })
 
