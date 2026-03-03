@@ -102,7 +102,7 @@ export function AIPlannerInterface() {
 
   const fetchDestinationData = async (name: string) => {
     try {
-      const res = await fetch(`https://tourify-backend-99ef.onrender.com/api/world/destinations`)
+      const res = await fetch(`https://tourify-4euu.onrender.com/api/world/destinations`)
       const data = await res.json()
       const found = data.find((d: any) => d.name.toLowerCase().includes(name.toLowerCase()))
       if (found) setActiveDestinationData(found)

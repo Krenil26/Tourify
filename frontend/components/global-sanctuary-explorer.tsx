@@ -45,7 +45,7 @@ export function GlobalSanctuaryExplorer() {
     useEffect(() => {
         const fetchSanctuary = async () => {
             try {
-                const res = await fetch("https://tourify-backend-99ef.onrender.com/api/sanctuary")
+                const res = await fetch("https://tourify-4euu.onrender.com/api/sanctuary")
                 const json = await res.json()
                 setData(json)
             } catch (err) {

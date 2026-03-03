@@ -39,7 +39,7 @@ export function Navbar() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await fetch("https://tourify-backend-99ef.onrender.com/api/notifications")
+        const res = await fetch("https://tourify-4euu.onrender.com/api/notifications")
         if (!res.ok) return
         const data = await res.json()
         setNotifications(Array.isArray(data) ? data : [])

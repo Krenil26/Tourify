@@ -8,6 +8,7 @@ const router = express.Router();
 // Register
 router.post('/register', async (req, res) => {
   try {
+    console.log('Registration Body:', JSON.stringify(req.body, null, 2));
     const { name, email, password, role } = req.body;
     console.log(`Registration attempt for: ${email}`);
 
@@ -43,6 +44,31 @@ router.post('/login', async (req, res) => {
     res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// @route   GET api/auth/dev-admin
+// @desc    Quickly create an admin user for testing if none exists
+router.get('/dev-admin', async (req, res) => {
+  try {
+    const adminExists = await User.findOne({ role: 'admin' });
+    if (adminExists) {
+      return res.json({ msg: 'Admin already exists', email: adminExists.email });
+    }
+
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const admin = new User({
+      name: 'System Admin',
+      email: 'admin@tourify.com',
+      password: hashedPassword,
+      role: 'admin'
+    });
+
+    await admin.save();
+    res.json({ msg: 'Admin created!', email: admin.email, password: 'admin123' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

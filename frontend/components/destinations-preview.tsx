@@ -12,7 +12,7 @@ export function DestinationsPreview() {
   useEffect(() => {
     const fetchDestinations = async () => {
       try {
-        const res = await fetch("https://tourify-backend-99ef.onrender.com/api/world/destinations")
+        const res = await fetch("https://tourify-4euu.onrender.com/api/world/destinations")
         if (!res.ok) {
           console.error("Destinations API error:", res.status)
           setDestinations([])
