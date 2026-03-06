@@ -21,7 +21,7 @@ router.post('/register', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userRole = (role === 'admin' || role === 'customer') ? role : 'customer';
+    const userRole = 'customer'; // Enforce customer role for all public signups
 
     const userData = {
       name,

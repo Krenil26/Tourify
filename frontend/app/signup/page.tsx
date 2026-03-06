@@ -112,33 +112,6 @@ export default function SignupPage() {
                                     disabled={isLoading}
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label>Role</Label>
-                                <div className="flex items-center space-x-4 mt-2">
-                                    <label className="flex items-center space-x-2 cursor-pointer">
-                                        <input
-                                            type="radio"
-                                            name="role"
-                                            value="customer"
-                                            checked={formData.role === "customer"}
-                                            onChange={(e) => setFormData({ ...formData, role: e.target.value as "customer" | "admin" })}
-                                            className="w-4 h-4 text-emerald-500 bg-emerald-500/10 border-emerald-500/30 focus:ring-emerald-500 focus:ring-2"
-                                        />
-                                        <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Customer</span>
-                                    </label>
-                                    <label className="flex items-center space-x-2 cursor-pointer">
-                                        <input
-                                            type="radio"
-                                            name="role"
-                                            value="admin"
-                                            checked={formData.role === "admin"}
-                                            onChange={(e) => setFormData({ ...formData, role: e.target.value as "customer" | "admin" })}
-                                            className="w-4 h-4 text-emerald-500 bg-emerald-500/10 border-emerald-500/30 focus:ring-emerald-500 focus:ring-2"
-                                        />
-                                        <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Admin</span>
-                                    </label>
-                                </div>
-                            </div>
                         </CardContent>
                         <CardFooter className="flex flex-col space-y-4">
                             <Button
