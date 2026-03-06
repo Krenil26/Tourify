@@ -1,7 +1,7 @@
 const API_BASE_URL = "https://tourify-4cuu.onrender.com/api";
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     const headers = {
         "Content-Type": "application/json",
         ...options.headers,

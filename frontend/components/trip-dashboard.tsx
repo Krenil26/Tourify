@@ -109,12 +109,12 @@ export function TripDashboard() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const stored = localStorage.getItem("user")
+    const stored = sessionStorage.getItem("user")
     if (stored) {
       try {
         setUser(JSON.parse(stored))
       } catch (e) {
-        console.error("Failed to parse user from localStorage", e)
+        console.error("Failed to parse user from sessionStorage", e)
       }
       setIsLoading(false)
     } else {

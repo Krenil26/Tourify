@@ -17,13 +17,13 @@ export function Navbar() {
 
   // Read user from localStorage (runs client-side only)
   useEffect(() => {
-    const stored = localStorage.getItem("user")
+    const stored = sessionStorage.getItem("user")
     if (stored) {
       try { setLoggedInUser(JSON.parse(stored)) } catch { setLoggedInUser(null) }
     }
     // Listen for storage changes (e.g. login/logout in another tab)
     const onStorage = () => {
-      const s = localStorage.getItem("user")
+      const s = sessionStorage.getItem("user")
       setLoggedInUser(s ? JSON.parse(s) : null)
     }
     window.addEventListener("storage", onStorage)
@@ -53,8 +53,8 @@ export function Navbar() {
   const unreadCount = notifications.filter(n => !n.isRead).length
 
   const handleLogout = () => {
-    localStorage.removeItem("user")
-    localStorage.removeItem("token")
+    sessionStorage.removeItem("user")
+    sessionStorage.removeItem("token")
     setLoggedInUser(null)
     router.push("/login")
   }

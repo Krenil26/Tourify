@@ -107,7 +107,7 @@ export function UserProfile() {
   })
 
   useEffect(() => {
-    const stored = localStorage.getItem("user")
+    const stored = sessionStorage.getItem("user")
     if (stored) {
       try {
         const u = JSON.parse(stored)

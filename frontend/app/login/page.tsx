@@ -32,9 +32,9 @@ export default function LoginPage() {
         try {
             const data = await api.auth.login(formData)
 
-            // Store token and user data
-            localStorage.setItem("token", data.token)
-            localStorage.setItem("user", JSON.stringify(data.user))
+            // Store token and user data in sessionStorage for independent tab sessions
+            sessionStorage.setItem("token", data.token)
+            sessionStorage.setItem("user", JSON.stringify(data.user))
 
             toast({
                 title: "Welcome back!",

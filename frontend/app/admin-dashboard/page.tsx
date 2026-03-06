@@ -43,8 +43,8 @@ export default function AdminDashboard() {
 
     // Auth guard
     useEffect(() => {
-        const userData = localStorage.getItem("user")
-        const storedToken = localStorage.getItem("token")
+        const userData = sessionStorage.getItem("user")
+        const storedToken = sessionStorage.getItem("token")
         if (userData && storedToken) {
             const parsed = JSON.parse(userData)
             if (parsed.role !== "admin") {
@@ -174,7 +174,7 @@ export default function AdminDashboard() {
                                     <div className="text-xs font-bold text-white truncate">{user.name}</div>
                                     <div className="text-[10px] text-emerald-500 font-bold capitalize">{user.role}</div>
                                 </div>
-                                <button onClick={() => { localStorage.clear(); router.push("/login") }}
+                                <button onClick={() => { sessionStorage.clear(); router.push("/login") }}
                                     className="text-white/30 hover:text-red-400 transition-colors">
                                     <LogOut className="w-4 h-4" />
                                 </button>

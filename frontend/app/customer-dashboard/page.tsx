@@ -44,8 +44,8 @@ export default function CustomerDashboard() {
 
     // Auth guard
     useEffect(() => {
-        const userData = localStorage.getItem("user")
-        const storedToken = localStorage.getItem("token")
+        const userData = sessionStorage.getItem("user")
+        const storedToken = sessionStorage.getItem("token")
         if (userData && storedToken) {
             setUser(JSON.parse(userData))
             setToken(storedToken)
@@ -176,7 +176,7 @@ export default function CustomerDashboard() {
                             <Link href="/profile" className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-white/50 hover:text-white hover:bg-white/5 transition-all">
                                 <Settings className="w-4 h-4" /> Settings
                             </Link>
-                            <button onClick={() => { localStorage.clear(); router.push("/login") }}
+                            <button onClick={() => { sessionStorage.clear(); router.push("/login") }}
                                 className="flex w-full items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-white/50 hover:text-red-400 hover:bg-red-500/5 transition-all">
                                 <LogOut className="w-4 h-4" /> Sign Out
                             </button>
