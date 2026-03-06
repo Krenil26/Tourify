@@ -126,6 +126,9 @@ export default function LoginPage() {
                                     "Sign In"
                                 )}
                             </Button>
+                            <p className="text-[10px] text-muted-foreground text-center px-4 leading-tight">
+                                Note: Logins may take up to 50 seconds if the free-tier backend is waking up from sleep.
+                            </p>
 
                             <div className="relative">
                                 <div className="absolute inset-0 flex items-center">

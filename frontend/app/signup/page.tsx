@@ -155,6 +155,9 @@ export default function SignupPage() {
                                     "Create account"
                                 )}
                             </Button>
+                            <p className="text-[10px] text-muted-foreground text-center px-4 leading-tight">
+                                Note: Logins may take up to 50 seconds if the free-tier backend is waking up from sleep.
+                            </p>
                             <div className="text-center text-sm text-muted-foreground">
                                 Already have an account?{" "}
                                 <Link href="/login" className="text-emerald-500 hover:text-emerald-400 hover:underline font-medium">
