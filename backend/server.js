@@ -21,17 +21,32 @@ const customerRoutes = require('./routes/customer');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors()); // Simplest possible CORS
-app.use(express.json());
-
-// Log all requests
+// 1. Extreme CORS Fix (Manual headers to bypass potential library issues)
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
   next();
 });
 
-// Routes
+app.use(express.json());
+
+// 2. Health Check / Root (Moved to top)
+app.get('/', (req, res) => {
+  console.log('✅ Health check hit at root /');
+  res.send('Tourify API is ONLINE. v1.0.2');
+});
+
+// 3. Detailed Request Logging
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
+// 4. API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/world', worldRoutes);
 app.use('/api/notifications', notificationRoutes);
@@ -44,15 +59,6 @@ app.use('/api/tribe', tribeRoutes);
 app.use('/api/wildlife', wildlifeRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/customer', customerRoutes);
-
-// Basic Route
-app.get('/', (req, res) => {
-  res.json({
-    status: 'online',
-    message: 'Tourify Backend is running with Firebase Firestore! 🔥',
-    timestamp: new Date().toISOString()
-  });
-});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
