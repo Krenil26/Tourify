@@ -47,7 +47,11 @@ app.use('/api/customer', customerRoutes);
 
 // Basic Route
 app.get('/', (req, res) => {
-  res.send('Tourify Backend is running with Firebase Firestore! 🔥');
+  res.json({
+    status: 'online',
+    message: 'Tourify Backend is running with Firebase Firestore! 🔥',
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.listen(PORT, () => {

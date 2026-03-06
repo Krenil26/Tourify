@@ -30,16 +30,9 @@ if (!admin.apps.length) {
             credential: admin.credential.applicationDefault(),
         });
     } else {
-        console.error(
-            '⚠️  Firebase: Credentials missing. Debug info:\n' +
-            `- FIREBASE_PROJECT_ID exists: ${!!process.env.FIREBASE_PROJECT_ID}\n` +
-            `- FIREBASE_CLIENT_EMAIL exists: ${!!process.env.FIREBASE_CLIENT_EMAIL}\n` +
-            `- FIREBASE_PRIVATE_KEY exists: ${!!process.env.FIREBASE_PRIVATE_KEY}\n` +
-            'Please ensure these exact keys are saved in your Render Environment Variables.'
-        );
-        // Still initialize with project ID so errors are descriptive
+        console.warn('⚠️  Firebase: Initializing in fallback mode due to missing credentials.');
         app = admin.initializeApp({
-            projectId: projectId || 'tourify-app',
+            projectId: projectId || 'tourify-app'
         });
     }
 } else {
