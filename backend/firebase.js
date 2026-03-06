@@ -31,8 +31,11 @@ if (!admin.apps.length) {
         });
     } else {
         console.error(
-            '⚠️  Firebase: No credentials found. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY in your .env file.\n' +
-            '   You can get these from your Firebase project settings → Service accounts → Generate new private key.'
+            '⚠️  Firebase: Credentials missing. Debug info:\n' +
+            `- FIREBASE_PROJECT_ID exists: ${!!process.env.FIREBASE_PROJECT_ID}\n` +
+            `- FIREBASE_CLIENT_EMAIL exists: ${!!process.env.FIREBASE_CLIENT_EMAIL}\n` +
+            `- FIREBASE_PRIVATE_KEY exists: ${!!process.env.FIREBASE_PRIVATE_KEY}\n` +
+            'Please ensure these exact keys are saved in your Render Environment Variables.'
         );
         // Still initialize with project ID so errors are descriptive
         app = admin.initializeApp({
