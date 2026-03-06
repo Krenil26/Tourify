@@ -19,7 +19,7 @@ const adminRoutes = require('./routes/admin');
 const customerRoutes = require('./routes/customer');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000; // Render expects port 10000 or the PORT env var
 
 // 1. Extreme CORS Fix (Manual headers to bypass potential library issues)
 app.use((req, res, next) => {
@@ -60,7 +60,13 @@ app.use('/api/wildlife', wildlifeRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/customer', customerRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// 5. Catch-all for debugging 404s
+app.use((req, res) => {
+  console.log(`❌ MY-APP-404: ${req.method} ${req.url}`);
+  res.status(404).send(`Tourify Backend (v1.0.3) says: The route ${req.url} was not found on this server.`);
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server strictly listening on 0.0.0.0:${PORT}`);
   console.log('Database: Firebase Firestore');
 });
