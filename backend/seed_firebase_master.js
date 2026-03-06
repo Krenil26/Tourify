@@ -234,6 +234,30 @@ const tribePosts = [
     }
 ];
 
+const notifications = [
+    {
+        title: "Eco-Trail Tip",
+        message: "New nature trails have been added to your Santorini guide! Check them out now.",
+        type: "info",
+        isRead: false,
+        createdAt: new Date().toISOString(),
+    },
+    {
+        title: "Achievement Unlocked",
+        message: "You've explored 5 different biomes this month. You're a true Earth Guardian!",
+        type: "success",
+        isRead: false,
+        createdAt: new Date().toISOString(),
+    },
+    {
+        title: "Weather Alert",
+        message: "Upcoming rain in Munnar might affect trail accessibility. Plan accordingly.",
+        type: "alert",
+        isRead: false,
+        createdAt: new Date().toISOString(),
+    }
+];
+
 const seedData = async () => {
     try {
         console.log('Starting Master Firebase Seed...');
@@ -285,6 +309,22 @@ const seedData = async () => {
         });
         await tribeInsertBatch.commit();
         console.log(`✅ ${tribePosts.length} Tribe posts seeded.`);
+
+        // 4. Seed Notifications
+        console.log('Seeding Notifications...');
+        const notifRef = db.collection('notifications');
+        const notifSnapshot = await notifRef.get();
+        const notifBatch = db.batch();
+        notifSnapshot.docs.forEach(doc => notifBatch.delete(doc.ref));
+        await notifBatch.commit();
+
+        const notifInsertBatch = db.batch();
+        notifications.forEach(n => {
+            const ref = notifRef.doc();
+            notifInsertBatch.set(ref, n);
+        });
+        await notifInsertBatch.commit();
+        console.log(`✅ ${notifications.length} Notifications seeded.`);
 
         console.log('Master Firebase Seed Completed Successfully! 🚀');
         process.exit(0);
