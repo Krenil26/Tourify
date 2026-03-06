@@ -24,7 +24,7 @@ const RealMapView = dynamic(() => import("./real-map-view"), {
 // Static data removed, now fetching from backend
 
 const categories = ["All", "Beach", "City", "Romantic", "Luxury", "Adventure", "Culture"]
-const priceRanges = ["All Prices", "Under $1000", "$1000 - $1500", "$1500 - $2000", "Above $2000"]
+const priceRanges = ["All Prices", "Under ₹5000", "₹5000 - ₹15000", "₹15000 - ₹30000", "Above ₹30000"]
 
 export function DestinationsExplorer() {
   const [items, setItems] = useState<any[]>([])
@@ -69,10 +69,10 @@ export function DestinationsExplorer() {
     const matchesCategory = selectedCategory === "All" || item.category === selectedCategory
     const matchesPrice =
       selectedPrice === "All Prices" ||
-      (selectedPrice === "Under $1000" && item.price < 1000) ||
-      (selectedPrice === "$1000 - $1500" && item.price >= 1000 && item.price <= 1500) ||
-      (selectedPrice === "$1500 - $2000" && item.price >= 1500 && item.price <= 2000) ||
-      (selectedPrice === "Above $2000" && item.price > 2000)
+      (selectedPrice === "Under ₹5000" && item.price < 5000) ||
+      (selectedPrice === "₹5000 - ₹15000" && item.price >= 5000 && item.price <= 15000) ||
+      (selectedPrice === "₹15000 - ₹30000" && item.price >= 15000 && item.price <= 30000) ||
+      (selectedPrice === "Above ₹30000" && item.price > 30000)
 
     return matchesSearch && matchesCategory && matchesPrice
   })
@@ -332,7 +332,7 @@ export function DestinationsExplorer() {
                     </div>
                     {item.price && (
                       <div className="text-right">
-                        <span className="text-base font-black text-primary">${item.price}</span>
+                        <span className="text-base font-black text-primary">₹{item.price}</span>
                       </div>
                     )}
                   </div>

@@ -86,7 +86,6 @@ export function Navbar() {
             <NavLink href="/global-sanctuary" icon={Globe} label="Sanctuary" />
             <NavLink href="/tribal-sync" icon={Users} label="Tribe" />
             <NavLink href="/wildlife-insight" icon={Bird} label="Wildlife" />
-            <NavLink href="/dashboard" label="Log" />
           </div>
 
           <div className="hidden md:flex items-center gap-4">
@@ -212,7 +211,6 @@ export function Navbar() {
                 <MobileLink href="/global-sanctuary" icon={Globe} label="Global Sanctuary" onClick={() => setIsOpen(false)} />
                 <MobileLink href="/tribal-sync" icon={Users} label="Tribal Sync" onClick={() => setIsOpen(false)} />
                 <MobileLink href="/wildlife-insight" icon={Bird} label="Wildlife Insight" onClick={() => setIsOpen(false)} />
-                <MobileLink href="/dashboard" label="Travel Log" onClick={() => setIsOpen(false)} />
 
                 <div className="pt-6 mt-4 border-t border-foreground/5 px-4 space-y-3">
                   {loggedInUser ? (

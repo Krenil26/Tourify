@@ -92,7 +92,7 @@ const travelStats = [
   { label: "Countries Visited", value: 8 },
   { label: "Total Trips", value: 12 },
   { label: "Miles Traveled", value: "45,230" },
-  { label: "Money Saved", value: "$2,340" },
+  { label: "Money Saved", value: "₹2,34,000" },
 ]
 
 export function UserProfile() {
@@ -307,7 +307,7 @@ export function UserProfile() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-3xl font-extrabold text-foreground">${booking.totalCost}</div>
+                        <div className="text-3xl font-extrabold text-foreground">₹{booking.totalCost}</div>
                         <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mt-1 text-emerald-600/60">Total Budget</div>
                       </div>
                     </div>

@@ -146,7 +146,7 @@ export function WorldMapView({ destinations }: WorldMapViewProps) {
                                 </div>
                             </div>
                             <div className="flex items-center justify-between mt-4 gap-3">
-                                <div className="text-sm font-bold text-primary">${selectedDest.price}<span className="text-[10px] text-muted-foreground font-normal ml-1">/person</span></div>
+                                <div className="text-sm font-bold text-primary">₹{selectedDest.price}<span className="text-[10px] text-muted-foreground font-normal ml-1">/person</span></div>
                                 <Link href={`/planner?destination=${encodeURIComponent(selectedDest.name)}`}>
                                     <Button size="sm" className="h-8 text-[11px] rounded-lg px-3">
                                         Go to Trail <ArrowRight className="w-3 h-3 ml-1" />
