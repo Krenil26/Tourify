@@ -22,10 +22,14 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors({
-  origin: '*'
-}));
+app.use(cors()); // Simplest possible CORS
 app.use(express.json());
+
+// Log all requests
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -46,7 +50,7 @@ app.get('/', (req, res) => {
   res.send('Tourify Backend is running with Firebase Firestore! 🔥');
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log('Database: Firebase Firestore');
 });
