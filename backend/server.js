@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
   res.send('Tourify Backend is running with Firebase Firestore! 🔥');
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
   console.log('Database: Firebase Firestore');
 });
