@@ -344,8 +344,7 @@ function SanctuaryCard({ dest, index }: { dest: any; index: number }) {
                                 <span className="text-[11px]">{dest.bestTime}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                                <DollarSign className="w-3 h-3 text-emerald-500" />
-                                <span className="text-xs font-bold text-foreground">{dest.price}</span>
+                                <span className="text-xs font-bold text-foreground">₹{dest.price}</span>
                                 <span className="text-[10px] text-muted-foreground">/trip</span>
                             </div>
                         </div>

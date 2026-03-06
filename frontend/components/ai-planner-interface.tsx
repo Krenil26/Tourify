@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
@@ -77,6 +78,7 @@ interface Message {
 }
 
 export function AIPlannerInterface() {
+  const router = useRouter()
   const [step, setStep] = useState(1)
   const [destination, setDestination] = useState("")
   const [dates, setDates] = useState({ start: "", end: "" })
@@ -173,6 +175,20 @@ export function AIPlannerInterface() {
     setShowItinerary(true)
     setIsGenerating(false)
     setStep(4)
+  }
+
+  const handleBookTrip = () => {
+    const bookingData = {
+      destination,
+      travelers,
+      budget: budget[0],
+      styles: selectedStyles,
+      itinerary: customItinerary,
+      startDate: dates.start,
+      endDate: dates.end
+    }
+    sessionStorage.setItem("pending_booking", JSON.stringify(bookingData))
+    router.push("/booking")
   }
 
   const sendMessage = () => {
@@ -353,9 +369,9 @@ export function AIPlannerInterface() {
                       className="w-full"
                     />
                     <div className="flex justify-between mt-2">
-                      <span className="text-sm text-muted-foreground">$500</span>
-                      <span className="text-lg font-bold text-primary">${budget[0]}</span>
-                      <span className="text-sm text-muted-foreground">$10,000</span>
+                      <span className="text-sm text-muted-foreground">₹5,000</span>
+                      <span className="text-lg font-bold text-primary">₹{budget[0]}</span>
+                      <span className="text-sm text-muted-foreground">₹1,00,000</span>
                     </div>
                   </div>
                 </div>
@@ -512,7 +528,7 @@ export function AIPlannerInterface() {
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      3 Days • {travelers} Travelers • ${budget[0]} Budget
+                      3 Days • {travelers} Travelers • ₹{budget[0]} Budget
                     </p>
                   </div>
                   <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
@@ -525,10 +541,10 @@ export function AIPlannerInterface() {
                   <h4 className="text-sm font-medium text-muted-foreground mb-3">Budget Breakdown</h4>
                   <div className="grid grid-cols-4 gap-2">
                     {[
-                      { label: "Flights", value: "$400", percent: 40 },
-                      { label: "Hotels", value: "$300", percent: 30 },
-                      { label: "Activities", value: "$150", percent: 15 },
-                      { label: "Food", value: "$150", percent: 15 },
+                      { label: "Flights", value: "₹45,000", percent: 40 },
+                      { label: "Hotels", value: "₹35,000", percent: 30 },
+                      { label: "Activities", value: "₹15,000", percent: 15 },
+                      { label: "Food", value: "₹15,000", percent: 15 },
                     ].map((item, i) => (
                       <div key={i} className="text-center">
                         <div className="text-lg font-bold text-primary">{item.value}</div>
@@ -566,7 +582,7 @@ export function AIPlannerInterface() {
                               </div>
                               <p className="text-foreground">{activity.activity}</p>
                             </div>
-                            {activity.cost > 0 && <span className="text-primary font-medium">${activity.cost}</span>}
+                            {activity.cost > 0 && <span className="text-primary font-medium">₹{activity.cost}</span>}
                           </div>
                         ))}
                       </div>
@@ -574,7 +590,10 @@ export function AIPlannerInterface() {
                   ))}
                 </div>
 
-                <Button className="w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl text-base font-semibold glow-cyan">
+                <Button
+                  className="w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl text-base font-semibold glow-cyan"
+                  onClick={handleBookTrip}
+                >
                   Book This Trip
                   <ChevronRight className="w-5 h-5 ml-2" />
                 </Button>

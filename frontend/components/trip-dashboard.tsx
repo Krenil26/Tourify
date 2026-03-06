@@ -58,7 +58,7 @@ const recentActivity = [
   {
     type: "price_drop",
     title: "Flight price dropped!",
-    description: "Tokyo flight now $120 cheaper",
+    description: "Tokyo flight now ₹10,000 cheaper",
     time: "2 hours ago",
     icon: TrendingDown,
     color: "text-chart-3",
@@ -74,7 +74,7 @@ const recentActivity = [
   {
     type: "reminder",
     title: "Payment due soon",
-    description: "Bali trip - $400 remaining",
+    description: "Bali trip - ₹35,000 remaining",
     time: "2 days ago",
     icon: AlertCircle,
     color: "text-chart-4",
@@ -82,7 +82,7 @@ const recentActivity = [
   {
     type: "price_increase",
     title: "Activity price increased",
-    description: "Mt. Fuji tour now $15 more",
+    description: "Mt. Fuji tour now ₹1,200 more",
     time: "3 days ago",
     icon: TrendingUp,
     color: "text-destructive",
@@ -225,7 +225,7 @@ export function TripDashboard() {
                         <div className="flex items-center justify-between text-sm mb-1">
                           <span className="text-muted-foreground">Payment Progress</span>
                           <span className="text-foreground font-medium">
-                            ${trip.paidAmount} / ${trip.totalCost}
+                            ₹{trip.paidAmount} / ₹{trip.totalCost}
                           </span>
                         </div>
                         <Progress value={(trip.paidAmount / trip.totalCost) * 100} className="h-2" />
@@ -251,7 +251,7 @@ export function TripDashboard() {
                   { icon: Plane, label: "Flights", value: "Booked", color: "text-primary" },
                   { icon: Hotel, label: "Hotels", value: "Booked", color: "text-chart-3" },
                   { icon: MapPin, label: "Activities", value: "5 planned", color: "text-chart-4" },
-                  { icon: DollarSign, label: "Budget", value: "$2,450", color: "text-chart-2" },
+                  { icon: Wallet, label: "Budget", value: "₹2,50,000", color: "text-chart-2" },
                 ].map((stat, index) => (
                   <div key={index} className="bg-secondary rounded-xl p-4 text-center">
                     <stat.icon className={`w-5 h-5 mx-auto mb-2 ${stat.color}`} />
@@ -301,8 +301,8 @@ export function TripDashboard() {
               </div>
 
               <div className="text-center mb-6">
-                <div className="text-3xl font-bold text-foreground">${totalSpent}</div>
-                <div className="text-sm text-muted-foreground">of ${totalBudget} budget</div>
+                <div className="text-3xl font-bold text-foreground">₹{totalSpent}</div>
+                <div className="text-sm text-muted-foreground">of ₹{totalBudget} budget</div>
                 <Progress value={(totalSpent / totalBudget) * 100} className="h-3 mt-3" />
               </div>
 
@@ -312,7 +312,7 @@ export function TripDashboard() {
                     <div className="flex items-center justify-between text-sm mb-1">
                       <span className="text-muted-foreground">{cat.name}</span>
                       <span className="text-foreground">
-                        ${cat.spent} / ${cat.budget}
+                        ₹{cat.spent} / ₹{cat.budget}
                       </span>
                     </div>
                     <div className="h-2 bg-secondary rounded-full overflow-hidden">
@@ -366,7 +366,7 @@ export function TripDashboard() {
                     />
                     <div className="flex-1">
                       <div className="text-sm font-medium text-foreground">{dest.name}</div>
-                      <div className="text-xs text-muted-foreground">From ${dest.price}</div>
+                      <div className="text-xs text-muted-foreground">From ₹{dest.price}</div>
                     </div>
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   </div>

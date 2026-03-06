@@ -9,7 +9,7 @@ import {
     Map, Globe, Bird, LogOut, Menu, TrendingUp, TrendingDown,
     Settings, Bell, Search, Trash2, Edit, ChevronRight, Leaf,
     Activity, Server, Database, Zap, UserPlus, Compass,
-    Filter, Eye, MoreVertical, Info, X, RefreshCw
+    Filter, Eye, MoreVertical, Info, X, RefreshCw, MapPin
 } from "lucide-react"
 
 const BACKEND = "https://tourify-4cuu.onrender.com"
@@ -34,6 +34,7 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState<any>(null)
     const [users, setUsers] = useState<any[]>([])
     const [notifications, setNotifications] = useState<any[]>([])
+    const [bookings, setBookings] = useState<any[]>([])
     const [showNotif, setShowNotif] = useState(false)
 
     // Loading states
@@ -82,6 +83,17 @@ export default function AdminDashboard() {
             .catch(() => { setLoadingUsers(false) })
     }, [token])
 
+    // Fetch bookings
+    useEffect(() => {
+        if (!token) return
+        fetch(`${BACKEND}/api/bookings/all`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(r => r.json())
+            .then(d => setBookings(Array.isArray(d) ? d : []))
+            .catch(() => setBookings([]))
+    }, [token])
+
     // Fetch notifications
     useEffect(() => {
         fetch(`${BACKEND}/api/notifications`)
@@ -116,6 +128,20 @@ export default function AdminDashboard() {
             setUsers(prev => prev.map(u => u._id === id ? { ...u, role: updated.role } : u))
         } catch {
             alert("Failed to update role")
+        }
+    }
+
+    // Update booking status
+    const handleBookingStatus = async (id: string, status: string) => {
+        try {
+            await fetch(`${BACKEND}/api/bookings/${id}/status`, {
+                method: "PUT",
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ status })
+            })
+            setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
+        } catch {
+            alert("Failed to update booking status")
         }
     }
 
@@ -369,6 +395,49 @@ export default function AdminDashboard() {
                                         ))}
                                     </tbody>
                                 </table>
+                            </div>
+                        )}
+                    </motion.div>
+
+                    {/* Booking Requests — real data */}
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+                        className="rounded-2xl border border-white/5 p-5"
+                        style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.01) 100%)" }}>
+                        <div className="flex items-center justify-between mb-5">
+                            <h2 className="font-bold text-white text-sm flex items-center gap-2">
+                                <Compass className="w-4 h-4 text-emerald-400" /> Booking Requests
+                                <span className="text-[10px] text-white/30 font-normal">({bookings.length} total)</span>
+                            </h2>
+                        </div>
+                        {bookings.length === 0 ? (
+                            <p className="text-xs text-white/30 text-center py-6">No booking requests found.</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {bookings.slice(0, 5).map((b, i) => (
+                                    <motion.div key={b.id} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.04 * i }}
+                                        className="flex items-center justify-between p-4 rounded-xl border border-white/5 hover:border-white/10 transition-all">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                                                <MapPin className="w-5 h-5 text-emerald-400" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-white/80">{b.destination}</p>
+                                                <p className="text-[11px] text-white/40">{b.userName} · {b.travelers} travelers · ₹{b.totalCost?.toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${b.status === 'approved' ? 'bg-emerald-500/10 text-emerald-500' : b.status === 'rejected' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                                {b.status || 'pending'}
+                                            </span>
+                                            {b.status === 'pending' && (
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => handleBookingStatus(b.id, 'approved')} className="p-1 px-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 text-[10px] font-bold transition-all">Approve</button>
+                                                    <button onClick={() => handleBookingStatus(b.id, 'rejected')} className="p-1 px-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 text-[10px] font-bold transition-all">Reject</button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                ))}
                             </div>
                         )}
                     </motion.div>
