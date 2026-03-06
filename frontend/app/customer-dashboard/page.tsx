@@ -11,7 +11,7 @@ import {
     CheckCircle, AlertTriangle, Info, X, BookOpen, RefreshCw
 } from "lucide-react"
 
-const BACKEND = "https://tourify-4euu.onrender.com"
+const BACKEND = "https://tourify-4cuu.onrender.com"
 
 const sidebarLinks = [
     { href: "/customer-dashboard", icon: LayoutDashboard, label: "Overview" },

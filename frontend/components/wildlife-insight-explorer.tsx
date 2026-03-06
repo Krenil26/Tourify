@@ -47,8 +47,8 @@ export function WildlifeInsightExplorer() {
             if (filter.status === "endangered") params.set("status", "endangered")
             if (filter.q) params.set("q", filter.q)
             const [wRes, sRes] = await Promise.all([
-                fetch(`https://tourify-4euu.onrender.com/api/wildlife?${params}`),
-                fetch(`https://tourify-4euu.onrender.com/api/wildlife/stats`),
+                fetch(`https://tourify-4cuu.onrender.com/api/wildlife?${params}`),
+                fetch(`https://tourify-4cuu.onrender.com/api/wildlife/stats`),
             ])
             const [wData, sData] = await Promise.all([wRes.json(), sRes.json()])
             setWildlife(wData)
@@ -68,7 +68,7 @@ export function WildlifeInsightExplorer() {
     const handleSight = async (id: string) => {
         if (sighted.has(id)) return
         try {
-            const res = await fetch(`https://tourify-4euu.onrender.com/api/wildlife/${id}/sight`, { method: "PUT" })
+            const res = await fetch(`https://tourify-4cuu.onrender.com/api/wildlife/${id}/sight`, { method: "PUT" })
             const data = await res.json()
             setWildlife(prev => prev.map(w => w._id === id ? { ...w, sightings: data.sightings } : w))
             if (selected?._id === id) setSelected((prev: any) => ({ ...prev, sightings: data.sightings }))

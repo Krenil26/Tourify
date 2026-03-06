@@ -12,7 +12,7 @@ import {
     Filter, Eye, MoreVertical, Info, X, RefreshCw
 } from "lucide-react"
 
-const BACKEND = "https://tourify-4euu.onrender.com"
+const BACKEND = "https://tourify-4cuu.onrender.com"
 
 const sidebarLinks = [
     { href: "/admin-dashboard", icon: LayoutDashboard, label: "Overview" },

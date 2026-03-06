@@ -46,7 +46,7 @@ export function NatureGuardDashboard() {
     const fetchData = async () => {
         setIsLoading(true)
         try {
-            const res = await fetch("https://tourify-4euu.onrender.com/api/nature-guard")
+            const res = await fetch("https://tourify-4cuu.onrender.com/api/nature-guard")
             const data = await res.json()
             setGuardData(data)
             setSelectedDestination(data[0] || null)

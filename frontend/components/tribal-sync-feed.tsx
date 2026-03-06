@@ -43,7 +43,7 @@ export function TribalSyncFeed() {
                 style: filter.style,
                 sort: filter.sort,
             })
-            const res = await fetch(`https://tourify-4euu.onrender.com/api/tribe?${params}`)
+            const res = await fetch(`https://tourify-4cuu.onrender.com/api/tribe?${params}`)
             const data = await res.json()
             setPosts(data)
         } catch (err) {
@@ -58,7 +58,7 @@ export function TribalSyncFeed() {
     const handleLike = async (postId: string) => {
         if (likedPosts.has(postId)) return
         try {
-            const res = await fetch(`https://tourify-4euu.onrender.com/api/tribe/${postId}/like`, { method: "PUT" })
+            const res = await fetch(`https://tourify-4cuu.onrender.com/api/tribe/${postId}/like`, { method: "PUT" })
             const data = await res.json()
             setPosts(prev => prev.map(p => p._id === postId ? { ...p, likes: data.likes } : p))
             setLikedPosts(prev => new Set(prev).add(postId))
@@ -71,7 +71,7 @@ export function TribalSyncFeed() {
         e.preventDefault()
         try {
             const payload = { ...form, tags: form.tags.split(",").map(t => t.trim()).filter(Boolean) }
-            await fetch("https://tourify-4euu.onrender.com/api/tribe", {
+            await fetch("https://tourify-4cuu.onrender.com/api/tribe", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
