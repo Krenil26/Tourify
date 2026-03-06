@@ -42,12 +42,8 @@ export default function LoginPage() {
                 description: "You have successfully signed in.",
             })
 
-            // Redirect based on role
-            if (data.user.role === 'admin') {
-                router.push("/admin-dashboard")
-            } else {
-                router.push("/customer-dashboard")
-            }
+            // Redirect to home so they can see their profile in the navbar
+            router.push("/")
         } catch (error: any) {
             toast({
                 variant: "destructive",
@@ -60,7 +56,7 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+        <div className="min-h-screen w-full flex flex-col items-center justify-center aurora-bg p-4">
             <Link href="/" className="absolute top-4 left-4 md:top-8 md:left-8 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
                 <ArrowLeft className="w-4 h-4" />
                 Back to Home
@@ -68,7 +64,7 @@ export default function LoginPage() {
 
             <div className="w-full max-w-md space-y-8">
                 <div className="flex flex-col items-center text-center space-y-2">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-rose-400 flex items-center justify-center shadow-lg mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg mb-4">
                         <Globe className="w-6 h-6 text-white" />
                     </div>
                     <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
@@ -101,7 +97,7 @@ export default function LoginPage() {
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                     <Label htmlFor="password">Password</Label>
-                                    <Link href="#" className="text-xs text-primary hover:underline">
+                                    <Link href="#" className="text-xs text-emerald-500 hover:text-emerald-400 hover:underline">
                                         Forgot password?
                                     </Link>
                                 </div>
@@ -118,7 +114,7 @@ export default function LoginPage() {
                         <CardFooter className="flex flex-col space-y-4">
                             <Button
                                 type="submit"
-                                className="w-full bg-gradient-to-r from-primary to-rose-400 text-white hover:opacity-90 shadow-lg glow-primary"
+                                className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90 shadow-lg shadow-emerald-500/20"
                                 disabled={isLoading}
                             >
                                 {isLoading ? (
@@ -170,7 +166,7 @@ export default function LoginPage() {
                             </Button>
                             <div className="text-center text-sm text-muted-foreground">
                                 Don&apos;t have an account?{" "}
-                                <Link href="/signup" className="text-primary hover:underline font-medium">
+                                <Link href="/signup" className="text-emerald-500 hover:text-emerald-400 hover:underline font-medium">
                                     Sign up
                                 </Link>
                             </div>

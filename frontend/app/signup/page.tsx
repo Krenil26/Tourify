@@ -52,7 +52,7 @@ export default function SignupPage() {
     }
 
     return (
-        <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+        <div className="min-h-screen w-full flex flex-col items-center justify-center aurora-bg p-4">
             <Link href="/" className="absolute top-4 left-4 md:top-8 md:left-8 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
                 <ArrowLeft className="w-4 h-4" />
                 Back to Home
@@ -60,7 +60,7 @@ export default function SignupPage() {
 
             <div className="w-full max-w-md space-y-8">
                 <div className="flex flex-col items-center text-center space-y-2">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-rose-400 flex items-center justify-center shadow-lg mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg mb-4">
                         <Globe className="w-6 h-6 text-white" />
                     </div>
                     <h1 className="text-2xl font-bold tracking-tight">Create an account</h1>
@@ -122,7 +122,7 @@ export default function SignupPage() {
                                             value="customer"
                                             checked={formData.role === "customer"}
                                             onChange={(e) => setFormData({ ...formData, role: e.target.value as "customer" | "admin" })}
-                                            className="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary dark:focus:ring-primary dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                            className="w-4 h-4 text-emerald-500 bg-emerald-500/10 border-emerald-500/30 focus:ring-emerald-500 focus:ring-2"
                                         />
                                         <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Customer</span>
                                     </label>
@@ -133,7 +133,7 @@ export default function SignupPage() {
                                             value="admin"
                                             checked={formData.role === "admin"}
                                             onChange={(e) => setFormData({ ...formData, role: e.target.value as "customer" | "admin" })}
-                                            className="w-4 h-4 text-primary bg-gray-100 border-gray-300 focus:ring-primary dark:focus:ring-primary dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                            className="w-4 h-4 text-emerald-500 bg-emerald-500/10 border-emerald-500/30 focus:ring-emerald-500 focus:ring-2"
                                         />
                                         <span className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Admin</span>
                                     </label>
@@ -143,7 +143,7 @@ export default function SignupPage() {
                         <CardFooter className="flex flex-col space-y-4">
                             <Button
                                 type="submit"
-                                className="w-full bg-gradient-to-r from-primary to-rose-400 text-white hover:opacity-90 shadow-lg glow-primary"
+                                className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white hover:opacity-90 shadow-lg shadow-emerald-500/20"
                                 disabled={isLoading}
                             >
                                 {isLoading ? (
@@ -157,7 +157,7 @@ export default function SignupPage() {
                             </Button>
                             <div className="text-center text-sm text-muted-foreground">
                                 Already have an account?{" "}
-                                <Link href="/login" className="text-primary hover:underline font-medium">
+                                <Link href="/login" className="text-emerald-500 hover:text-emerald-400 hover:underline font-medium">
                                     Sign in
                                 </Link>
                             </div>
