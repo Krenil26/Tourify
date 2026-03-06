@@ -1,25 +1,42 @@
 const express = require('express');
 const router = express.Router();
-const Wildlife = require('../models/Wildlife');
+const { db } = require('../firebase');
 
 // @route   GET api/wildlife
 // @desc    Get all wildlife, with optional filters
 router.get('/', async (req, res) => {
     try {
         const { type, species, status, q } = req.query;
-        let query = {};
-        if (type && type !== 'All') query.type = type;
-        if (species && species !== 'All') query.species = species;
-        if (status === 'endangered') query.isEndangered = true;
-        if (q) {
-            query.$or = [
-                { name: { $regex: q, $options: 'i' } },
-                { scientificName: { $regex: q, $options: 'i' } },
-                { tags: { $regex: q, $options: 'i' } },
-                { foundIn: { $regex: q, $options: 'i' } },
-            ];
+        let query = db.collection('wildlife');
+
+        // Apply indexed filters first (Firestore requires indexes for multi-field queries)
+        if (type && type !== 'All') {
+            query = query.where('type', '==', type);
         }
-        const wildlife = await Wildlife.find(query).sort({ sightings: -1 });
+        if (status === 'endangered') {
+            query = query.where('isEndangered', '==', true);
+        }
+
+        const snapshot = await query.get();
+        let wildlife = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Apply in-memory filters for fields that can't be easily combined with Firestore
+        if (species && species !== 'All') {
+            wildlife = wildlife.filter(w => w.species === species);
+        }
+        if (q) {
+            const search = q.toLowerCase();
+            wildlife = wildlife.filter(w =>
+                (w.name || '').toLowerCase().includes(search) ||
+                (w.scientificName || '').toLowerCase().includes(search) ||
+                (w.tags || []).some(tag => tag.toLowerCase().includes(search)) ||
+                (w.foundIn || []).some(f => f.toLowerCase().includes(search))
+            );
+        }
+
+        // Sort by sightings
+        wildlife.sort((a, b) => (b.sightings || 0) - (a.sightings || 0));
+
         res.json(wildlife);
     } catch (err) {
         console.error(err.message);
@@ -31,11 +48,19 @@ router.get('/', async (req, res) => {
 // @desc    Get summary stats
 router.get('/stats', async (req, res) => {
     try {
-        const total = await Wildlife.countDocuments();
-        const flora = await Wildlife.countDocuments({ type: 'Flora' });
-        const fauna = await Wildlife.countDocuments({ type: 'Fauna' });
-        const endangered = await Wildlife.countDocuments({ isEndangered: true });
-        res.json({ total, flora, fauna, endangered });
+        const [allSnapshot, floraSnapshot, faunaSnapshot, endangeredSnapshot] = await Promise.all([
+            db.collection('wildlife').get(),
+            db.collection('wildlife').where('type', '==', 'Flora').get(),
+            db.collection('wildlife').where('type', '==', 'Fauna').get(),
+            db.collection('wildlife').where('isEndangered', '==', true).get(),
+        ]);
+
+        res.json({
+            total: allSnapshot.size,
+            flora: floraSnapshot.size,
+            fauna: faunaSnapshot.size,
+            endangered: endangeredSnapshot.size,
+        });
     } catch (err) {
         res.status(500).send('Server Error');
     }
@@ -45,9 +70,13 @@ router.get('/stats', async (req, res) => {
 // @desc    Record a sighting
 router.put('/:id/sight', async (req, res) => {
     try {
-        const w = await Wildlife.findByIdAndUpdate(req.params.id, { $inc: { sightings: 1 } }, { new: true });
-        if (!w) return res.status(404).json({ msg: 'Not found' });
-        res.json({ sightings: w.sightings });
+        const ref = db.collection('wildlife').doc(req.params.id);
+        const doc = await ref.get();
+        if (!doc.exists) return res.status(404).json({ msg: 'Not found' });
+
+        const newSightings = (doc.data().sightings || 0) + 1;
+        await ref.update({ sightings: newSightings });
+        res.json({ sightings: newSightings });
     } catch (err) {
         res.status(500).send('Server Error');
     }
@@ -81,12 +110,12 @@ router.post('/seed', async (req, res) => {
                 type: 'Fauna',
                 species: 'Mammal',
                 image: 'https://images.unsplash.com/photo-1615457015775-60ed4b5d3be1?w=800&q=80',
-                description: 'India\'s national animal and a keystone species. Found in the dense forests of Sundarbans, Ranthambore, and Corbett.',
+                description: "India's national animal and a keystone species. Found in the dense forests of Sundarbans, Ranthambore, and Corbett.",
                 habitat: ['Forest', 'Mangrove', 'Grassland'],
                 foundIn: ['India', 'Bangladesh'],
                 conservationStatus: 'Endangered',
                 isEndangered: true,
-                funFact: 'Each tiger\'s stripe pattern is unique, like a human fingerprint.',
+                funFact: "Each tiger's stripe pattern is unique, like a human fingerprint.",
                 bestSpottingTime: 'Mar – Jun',
                 tags: ['Apex Predator', 'Iconic', 'Jungle'],
                 sightings: 879,
@@ -113,7 +142,7 @@ router.post('/seed', async (req, res) => {
                 type: 'Fauna',
                 species: 'Primate',
                 image: 'https://images.unsplash.com/photo-1549366021-9f761d450615?w=800&q=80',
-                description: 'Famous for bathing in hot springs during winter. The world\'s northernmost-living non-human primate, found in Japan\'s mountain forests.',
+                description: "Famous for bathing in hot springs during winter. The world's northernmost-living non-human primate, found in Japan's mountain forests.",
                 habitat: ['Forest', 'Mountain', 'Hot Spring'],
                 foundIn: ['Japan'],
                 conservationStatus: 'Least Concern',
@@ -145,7 +174,7 @@ router.post('/seed', async (req, res) => {
                 type: 'Fauna',
                 species: 'Mammal',
                 image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&q=80',
-                description: 'Protagonist of the Great Migration — over 1.5 million move across the Serengeti in one of nature\'s greatest spectacles.',
+                description: "Protagonist of the Great Migration — over 1.5 million move across the Serengeti in one of nature's greatest spectacles.",
                 habitat: ['Savanna', 'Grassland'],
                 foundIn: ['Tanzania', 'Kenya'],
                 conservationStatus: 'Least Concern',
@@ -178,7 +207,7 @@ router.post('/seed', async (req, res) => {
                 type: 'Flora',
                 species: 'Tree',
                 image: 'https://images.unsplash.com/photo-1522383225653-ed111181a951?w=800&q=80',
-                description: 'Japan\'s most iconic bloom. A symbol of the transient beauty of life in Japanese philosophy, blooming for only 1–2 weeks each spring.',
+                description: "Japan's most iconic bloom. A symbol of the transient beauty of life in Japanese philosophy, blooming for only 1–2 weeks each spring.",
                 habitat: ['Temperate Forest', 'Urban Park'],
                 foundIn: ['Japan'],
                 conservationStatus: 'Least Concern',
@@ -194,7 +223,7 @@ router.post('/seed', async (req, res) => {
                 type: 'Flora',
                 species: 'Tree',
                 image: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=800&q=80',
-                description: 'Africa\'s legendary "Tree of Life", which can live for 3,000 years and store up to 120,000 litres of water in its massive trunk.',
+                description: "Africa's legendary \"Tree of Life\", which can live for 3,000 years and store up to 120,000 litres of water in its massive trunk.",
                 habitat: ['Savanna', 'Dryland'],
                 foundIn: ['Tanzania', 'Kenya', 'South Africa'],
                 conservationStatus: 'Least Concern',
@@ -210,7 +239,7 @@ router.post('/seed', async (req, res) => {
                 type: 'Flora',
                 species: 'Flower',
                 image: 'https://images.unsplash.com/photo-1504700610630-ac6aba3536d3?w=800&q=80',
-                description: 'India\'s national flower and a symbol of purity in Hindu, Buddhist, and Jain traditions. Blooms in still, muddy waters — a metaphor for spiritual awakening.',
+                description: "India's national flower and a symbol of purity in Hindu, Buddhist, and Jain traditions. Blooms in still, muddy waters — a metaphor for spiritual awakening.",
                 habitat: ['Wetland', 'Pond', 'Lake'],
                 foundIn: ['India', 'Japan'],
                 conservationStatus: 'Least Concern',
@@ -222,9 +251,20 @@ router.post('/seed', async (req, res) => {
             },
         ];
 
-        await Wildlife.deleteMany();
-        const saved = await Wildlife.insertMany(entries);
-        res.json({ msg: 'Wildlife seeded!', count: saved.length });
+        // Delete existing and batch insert new
+        const existing = await db.collection('wildlife').get();
+        const deleteBatch = db.batch();
+        existing.docs.forEach(doc => deleteBatch.delete(doc.ref));
+        await deleteBatch.commit();
+
+        const insertBatch = db.batch();
+        entries.forEach(entry => {
+            const ref = db.collection('wildlife').doc();
+            insertBatch.set(ref, entry);
+        });
+        await insertBatch.commit();
+
+        res.json({ msg: 'Wildlife seeded!', count: entries.length });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');

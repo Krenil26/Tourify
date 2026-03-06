@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const Destination = require('../models/Destination');
+const { db } = require('../firebase');
 
 // @route   GET api/sanctuary
 // @desc    Get all sanctuary destinations grouped by region/continent
 router.get('/', async (req, res) => {
     try {
-        const destinations = await Destination.find({});
+        const snapshot = await db.collection('destinations').get();
+        const destinations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         // Group by continent based on country
         const continentMap = {
@@ -30,7 +31,7 @@ router.get('/', async (req, res) => {
             const continent = continentMap[dest.country] || 'Other';
             if (!acc[continent]) acc[continent] = [];
             acc[continent].push({
-                _id: dest._id,
+                id: dest.id,
                 name: dest.name,
                 country: dest.country,
                 image: dest.image,
@@ -53,13 +54,15 @@ router.get('/', async (req, res) => {
     }
 });
 
-// @route   GET api/sanctuary/categories
+// @route   GET api/sanctuary/category/:cat
 // @desc    Get destinations filtered by category
 router.get('/category/:cat', async (req, res) => {
     try {
-        const destinations = await Destination.find({
-            category: { $regex: req.params.cat, $options: 'i' }
-        });
+        const cat = req.params.cat.toLowerCase();
+        const snapshot = await db.collection('destinations').get();
+        const destinations = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(d => (d.category || '').toLowerCase().includes(cat));
         res.json(destinations);
     } catch (err) {
         console.error(err.message);

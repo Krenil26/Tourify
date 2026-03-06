@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
-const Notification = require('../models/Notification');
+const { db } = require('../firebase');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 
 // @route   GET api/admin/stats
@@ -9,18 +8,21 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 // @access  Private/Admin
 router.get('/stats', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const userCount = await User.countDocuments();
-        const customerCount = await User.countDocuments({ role: 'customer' });
-        const adminCount = await User.countDocuments({ role: 'admin' });
+        const usersRef = db.collection('users');
+        const notificationsRef = db.collection('notifications');
 
-        // Example system state data (would usually come from monitoring)
-        const activeAlerts = await Notification.countDocuments({ type: 'alert' });
+        const [allUsers, customers, admins, alertNotifs] = await Promise.all([
+            usersRef.get(),
+            usersRef.where('role', '==', 'customer').get(),
+            usersRef.where('role', '==', 'admin').get(),
+            notificationsRef.where('type', '==', 'alert').get(),
+        ]);
 
         res.json({
-            userCount,
-            customerCount,
-            adminCount,
-            activeAlerts,
+            userCount: allUsers.size,
+            customerCount: customers.size,
+            adminCount: admins.size,
+            activeAlerts: alertNotifs.size,
             systemStatus: 'Online',
             certifications: 342 // Mock data from dashboard
         });
@@ -35,7 +37,12 @@ router.get('/stats', authMiddleware, adminMiddleware, async (req, res) => {
 // @access  Private/Admin
 router.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const users = await User.find().select('-password').sort({ createdAt: -1 });
+        const snapshot = await db.collection('users').orderBy('createdAt', 'desc').get();
+        const users = snapshot.docs.map(doc => {
+            const data = doc.data();
+            delete data.password;
+            return { id: doc.id, ...data };
+        });
         res.json(users);
     } catch (err) {
         console.error(err.message);
@@ -48,10 +55,12 @@ router.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
 // @access  Private/Admin
 router.delete('/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const user = await User.findByIdAndDelete(req.params.id);
-        if (!user) {
+        const ref = db.collection('users').doc(req.params.id);
+        const doc = await ref.get();
+        if (!doc.exists) {
             return res.status(404).json({ msg: 'User not found' });
         }
+        await ref.delete();
         res.json({ msg: 'User removed' });
     } catch (err) {
         console.error(err.message);
@@ -69,15 +78,16 @@ router.put('/users/:id/role', authMiddleware, adminMiddleware, async (req, res) 
             return res.status(400).json({ msg: 'Invalid role' });
         }
 
-        const user = await User.findByIdAndUpdate(
-            req.params.id,
-            { role },
-            { new: true }
-        ).select('-password');
+        const ref = db.collection('users').doc(req.params.id);
+        const doc = await ref.get();
+        if (!doc.exists) return res.status(404).json({ msg: 'User not found' });
 
-        if (!user) return res.status(404).json({ msg: 'User not found' });
+        await ref.update({ role, updatedAt: new Date().toISOString() });
 
-        res.json(user);
+        const updatedDoc = await ref.get();
+        const user = updatedDoc.data();
+        delete user.password;
+        res.json({ id: updatedDoc.id, ...user });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');

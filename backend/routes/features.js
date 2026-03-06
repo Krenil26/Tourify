@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const Feature = require('../models/Feature');
+const { db } = require('../firebase');
 
 // @route   GET api/features
 // @desc    Get all features
 router.get('/', async (req, res) => {
     try {
-        const features = await Feature.find().sort({ order: 1 });
+        const snapshot = await db.collection('features').orderBy('order', 'asc').get();
+        const features = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         res.json(features);
     } catch (err) {
         console.error(err.message);
@@ -75,8 +76,20 @@ router.post('/seed', async (req, res) => {
             }
         ];
 
-        await Feature.deleteMany();
-        const features = await Feature.insertMany(initialFeatures);
+        // Delete all existing features
+        const existing = await db.collection('features').get();
+        const batch = db.batch();
+        existing.docs.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+
+        // Insert new features
+        const insertBatch = db.batch();
+        const refs = initialFeatures.map(() => db.collection('features').doc());
+        refs.forEach((ref, i) => insertBatch.set(ref, initialFeatures[i]));
+        await insertBatch.commit();
+
+        const snapshot = await db.collection('features').orderBy('order', 'asc').get();
+        const features = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         res.json(features);
     } catch (err) {
         console.error(err.message);

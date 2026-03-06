@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const Destination = require('../models/Destination');
+const { db } = require('../firebase');
 
 // @route   GET api/nature-guard
 // @desc    Get nature guard data (simulated weather + ecosystem health) for all destinations
 router.get('/', async (req, res) => {
     try {
-        const destinations = await Destination.find({}, 'name country coordinates natureFocus category tags bestTime');
+        const snapshot = await db.collection('destinations').get();
+        const destinations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         // Simulate real-time ecosystem & weather data for each destination
         const guardData = destinations.map(dest => {
@@ -25,7 +26,7 @@ router.get('/', async (req, res) => {
             const alertLevel = airQualityIndex > 75 ? 'Moderate' : wildlifeSafetyScore < 80 ? 'Low' : 'Clear';
 
             return {
-                _id: dest._id,
+                id: dest.id,
                 name: dest.name,
                 country: dest.country,
                 category: dest.category,
@@ -66,9 +67,10 @@ router.get('/', async (req, res) => {
 // @desc    Get nature guard data for a single destination
 router.get('/:id', async (req, res) => {
     try {
-        const dest = await Destination.findById(req.params.id, 'name country coordinates natureFocus category');
-        if (!dest) return res.status(404).json({ msg: 'Destination not found' });
+        const doc = await db.collection('destinations').doc(req.params.id).get();
+        if (!doc.exists) return res.status(404).json({ msg: 'Destination not found' });
 
+        const dest = { id: doc.id, ...doc.data() };
         const lat = dest.coordinates?.lat || 0;
         const lng = dest.coordinates?.lng || 0;
         const seed = Math.abs(lat + lng);
@@ -76,7 +78,7 @@ router.get('/:id', async (req, res) => {
         const airQualityIndex = Math.round(20 + (seed % 80));
 
         res.json({
-            _id: dest._id,
+            id: dest.id,
             name: dest.name,
             country: dest.country,
             weather: {

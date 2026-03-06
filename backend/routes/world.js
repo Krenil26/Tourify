@@ -1,13 +1,13 @@
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
+const { db } = require('../firebase');
 
-const Destination = require('../models/Destination');
-
-// Fetch destinations from MongoDB
+// Fetch destinations from Firestore
 router.get('/destinations', async (req, res) => {
   try {
-    const destinations = await Destination.find({});
+    const snapshot = await db.collection('destinations').get();
+    const destinations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json(destinations);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch destinations', error: err.message });

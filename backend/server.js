@@ -1,7 +1,9 @@
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose');
 require('dotenv').config();
+
+// Initialize Firebase (must be done before routes are loaded)
+const { db } = require('./firebase');
 
 const authRoutes = require('./routes/auth');
 const worldRoutes = require('./routes/world');
@@ -25,7 +27,7 @@ app.use(cors({
     process.env.FRONTEND_URL,
     'https://tourifyy.vercel.app',
     'http://localhost:3000'
-  ].filter(Boolean), // Filter out undefined values
+  ].filter(Boolean),
   credentials: true
 }));
 app.use(express.json());
@@ -44,29 +46,12 @@ app.use('/api/wildlife', wildlifeRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/customer', customerRoutes);
 
-// Database Connection
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/tourify', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-  } catch (error) {
-    console.error(`Error: ${error.message}`);
-    console.log('Ensure MongoDB is running locally on port 27017');
-    // Do not exit process, so the server can still run (though API might fail)
-    // process.exit(1); 
-  }
-};
-
-connectDB();
-
 // Basic Route
 app.get('/', (req, res) => {
-  res.send('Tourify Backend is running!');
+  res.send('Tourify Backend is running with Firebase Firestore! 🔥');
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log('Database: Firebase Firestore');
 });

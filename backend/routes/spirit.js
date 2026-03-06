@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Destination = require('../models/Destination');
+const { db } = require('../firebase');
 
 // @route   POST api/spirit/chat
 // @desc    Get AI Spirit response for a message
@@ -14,21 +14,22 @@ router.post('/chat', async (req, res) => {
 
         const query = message.toLowerCase();
 
-        // Search for destinations in our database
-        const destinations = await Destination.find({});
+        // Search for destinations from Firestore
+        const snapshot = await db.collection('destinations').get();
+        const destinations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
         // Simple keyword matching for demo/spirit purposes
         let foundDestination = destinations.find(d =>
             query.includes(d.name.toLowerCase()) ||
             query.includes(d.country.toLowerCase()) ||
-            d.tags.some(tag => query.includes(tag.toLowerCase()))
+            (d.tags || []).some(tag => query.includes(tag.toLowerCase()))
         );
 
         let response = "";
 
         if (foundDestination) {
-            const accommodation = foundDestination.accommodations[0]?.name || "Eco-certified mountain lodges";
-            const rental = foundDestination.rentals[0]?.name || "Electric rail & hiking trails";
+            const accommodation = foundDestination.accommodations?.[0]?.name || "Eco-certified mountain lodges";
+            const rental = foundDestination.rentals?.[0]?.name || "Electric rail & hiking trails";
 
             response = `I sense a strong connection with ${foundDestination.name}. A truly serene choice! For a low-impact path there, I've curated this for you:\n\n🏔️ Stay: ${accommodation}\n🌲 Mobility: ${rental}\n🛶 Experience: Local ${foundDestination.category} immersion\n\nNature Insights:\n• ${foundDestination.description || "A sanctuary for the soul."}\n• Best time to breathe here: ${foundDestination.bestTime || "Anytime nature calls."}\n\nWould you like the full trail map and eco-lodging details?`;
         } else if (query.includes("meditation") || query.includes("quiet") || query.includes("peace") || query.includes("tranquil")) {

@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User');
-const Destination = require('../models/Destination');
+const { db } = require('../firebase');
 const { authMiddleware } = require('../middleware/auth');
 
 // @route   GET api/customer/profile
@@ -9,8 +8,12 @@ const { authMiddleware } = require('../middleware/auth');
 // @access  Private
 router.get('/profile', authMiddleware, async (req, res) => {
     try {
-        const user = await User.findById(req.user.id).select('-password');
-        res.json(user);
+        const doc = await db.collection('users').doc(req.user.id).get();
+        if (!doc.exists) return res.status(404).json({ msg: 'User not found' });
+
+        const user = doc.data();
+        delete user.password;
+        res.json({ id: doc.id, ...user });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -24,18 +27,20 @@ router.put('/profile', authMiddleware, async (req, res) => {
     try {
         const { name, phone, location } = req.body;
 
-        const updatedFields = {};
-        if (name) updatedFields.name = name;
-        if (phone) updatedFields.phone = phone;
-        if (location) updatedFields.location = location;
+        const updates = { updatedAt: new Date().toISOString() };
+        if (name) updates.name = name;
+        if (phone) updates.phone = phone;
+        if (location) updates.location = location;
 
-        const user = await User.findByIdAndUpdate(
-            req.user.id,
-            { $set: updatedFields },
-            { new: true }
-        ).select('-password');
+        const ref = db.collection('users').doc(req.user.id);
+        await ref.update(updates);
 
-        res.json(user);
+        const updatedDoc = await ref.get();
+        if (!updatedDoc.exists) return res.status(404).json({ msg: 'User not found' });
+
+        const user = updatedDoc.data();
+        delete user.password;
+        res.json({ id: updatedDoc.id, ...user });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');

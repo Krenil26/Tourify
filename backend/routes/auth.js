@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const { db } = require('../firebase');
 
 const router = express.Router();
 
@@ -12,8 +12,10 @@ router.post('/register', async (req, res) => {
     const { name, email, password, role } = req.body;
     console.log(`Registration attempt for: ${email}`);
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    // Check if user already exists
+    const usersRef = db.collection('users');
+    const existing = await usersRef.where('email', '==', email).limit(1).get();
+    if (!existing.empty) {
       console.log(`Registration failed: ${email} already exists.`);
       return res.status(400).json({ message: 'User already exists' });
     }
@@ -21,11 +23,24 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const userRole = (role === 'admin' || role === 'customer') ? role : 'customer';
 
-    const user = new User({ name, email, password: hashedPassword, role: userRole });
-    await user.save();
+    const userData = {
+      name,
+      email,
+      password: hashedPassword,
+      role: userRole,
+      phone: '',
+      location: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const docRef = await usersRef.add(userData);
 
     console.log(`User registered successfully: ${email} as ${userRole}`);
-    res.status(201).json({ message: 'User registered successfully', user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    res.status(201).json({
+      message: 'User registered successfully',
+      user: { id: docRef.id, name, email, role: userRole }
+    });
   } catch (err) {
     console.error(`Registration ERROR for ${req.body.email}:`, err.message);
     res.status(500).json({ message: err.message });
@@ -36,37 +51,59 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+
+    const usersRef = db.collection('users');
+    const snapshot = await usersRef.where('email', '==', email).limit(1).get();
+
+    if (snapshot.empty) return res.status(400).json({ message: 'Invalid credentials' });
+
+    const doc = snapshot.docs[0];
+    const user = { id: doc.id, ...doc.data() };
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      process.env.JWT_SECRET || 'secret',
+      { expiresIn: '1d' }
+    );
+
+    res.json({
+      token,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role }
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
 // @route   GET api/auth/dev-admin
-// @desc    Quickly create an admin user for testing if none exists
+// @desc    Quickly create an admin user for dev/testing if none exists
 router.get('/dev-admin', async (req, res) => {
   try {
-    const adminExists = await User.findOne({ role: 'admin' });
-    if (adminExists) {
-      return res.json({ msg: 'Admin already exists', email: adminExists.email });
+    const usersRef = db.collection('users');
+    const adminSnapshot = await usersRef.where('role', '==', 'admin').limit(1).get();
+
+    if (!adminSnapshot.empty) {
+      const adminDoc = adminSnapshot.docs[0];
+      return res.json({ msg: 'Admin already exists', email: adminDoc.data().email });
     }
 
-    const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash('admin123', 10);
-    const admin = new User({
+    const admin = {
       name: 'System Admin',
       email: 'admin@tourify.com',
       password: hashedPassword,
-      role: 'admin'
-    });
+      role: 'admin',
+      phone: '',
+      location: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
 
-    await admin.save();
-    res.json({ msg: 'Admin created!', email: admin.email, password: 'admin123' });
+    const docRef = await usersRef.add(admin);
+    res.json({ msg: 'Admin created!', id: docRef.id, email: admin.email, password: 'admin123' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -1,21 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const TribePost = require('../models/TribePost');
+const { db } = require('../firebase');
 
 // @route   GET api/tribe
 // @desc    Get all tribe posts
 router.get('/', async (req, res) => {
     try {
         const { category, style, sort } = req.query;
-        let query = {};
-        if (category && category !== 'All') query.category = category;
-        if (style && style !== 'All') query.travelStyle = style;
+        let query = db.collection('tribePosts');
 
-        let sortOpt = { createdAt: -1 };
-        if (sort === 'popular') sortOpt = { likes: -1 };
-        if (sort === 'top') sortOpt = { rating: -1 };
+        if (category && category !== 'All') {
+            query = query.where('category', '==', category);
+        }
+        if (style && style !== 'All') {
+            query = query.where('travelStyle', '==', style);
+        }
 
-        const posts = await TribePost.find(query).sort(sortOpt);
+        // Firestore doesn't support multi-field ordering without composite indexes on filtered queries easily
+        // So we sort in-memory for flexibility
+        const snapshot = await query.get();
+        let posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        if (sort === 'popular') {
+            posts.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+        } else if (sort === 'top') {
+            posts.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        } else {
+            posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+
         res.json(posts);
     } catch (err) {
         console.error(err.message);
@@ -31,9 +44,28 @@ router.post('/', async (req, res) => {
         if (!authorName || !destination || !title || !story) {
             return res.status(400).json({ msg: 'Please fill all required fields.' });
         }
-        const post = new TribePost({ authorName, destination, country, title, story, tags, category, travelStyle, rating, image, isEcoCertified });
-        await post.save();
-        res.status(201).json(post);
+
+        const post = {
+            authorName,
+            authorAvatar: req.body.authorAvatar || '',
+            destination,
+            country: country || '',
+            image: image || '',
+            title,
+            story,
+            tags: tags || [],
+            likes: 0,
+            comments: 0,
+            category: category || 'Nature',
+            isEcoCertified: isEcoCertified || false,
+            travelStyle: travelStyle || 'Solo',
+            rating: rating || 5.0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        };
+
+        const docRef = await db.collection('tribePosts').add(post);
+        res.status(201).json({ id: docRef.id, ...post });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -44,13 +76,13 @@ router.post('/', async (req, res) => {
 // @desc    Like a tribe post
 router.put('/:id/like', async (req, res) => {
     try {
-        const post = await TribePost.findByIdAndUpdate(
-            req.params.id,
-            { $inc: { likes: 1 } },
-            { new: true }
-        );
-        if (!post) return res.status(404).json({ msg: 'Post not found' });
-        res.json({ likes: post.likes });
+        const ref = db.collection('tribePosts').doc(req.params.id);
+        const doc = await ref.get();
+        if (!doc.exists) return res.status(404).json({ msg: 'Post not found' });
+
+        const newLikes = (doc.data().likes || 0) + 1;
+        await ref.update({ likes: newLikes });
+        res.json({ likes: newLikes });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
@@ -77,6 +109,8 @@ router.post('/seed', async (req, res) => {
                 isEcoCertified: true,
                 travelStyle: "Solo",
                 rating: 5.0,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
             },
             {
                 authorName: "Luca Fontana",
@@ -93,6 +127,8 @@ router.post('/seed', async (req, res) => {
                 isEcoCertified: false,
                 travelStyle: "Couple",
                 rating: 4.9,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
             },
             {
                 authorName: "Meera Pillai",
@@ -109,6 +145,8 @@ router.post('/seed', async (req, res) => {
                 isEcoCertified: true,
                 travelStyle: "Family",
                 rating: 4.9,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
             },
             {
                 authorName: "Kai Tanaka",
@@ -125,6 +163,8 @@ router.post('/seed', async (req, res) => {
                 isEcoCertified: true,
                 travelStyle: "Solo",
                 rating: 5.0,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
             },
             {
                 authorName: "Zara Osei",
@@ -141,6 +181,8 @@ router.post('/seed', async (req, res) => {
                 isEcoCertified: true,
                 travelStyle: "Group",
                 rating: 5.0,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
             },
             {
                 authorName: "Sofia Andrade",
@@ -157,12 +199,26 @@ router.post('/seed', async (req, res) => {
                 isEcoCertified: false,
                 travelStyle: "Couple",
                 rating: 5.0,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
             },
         ];
 
-        await TribePost.deleteMany();
-        const saved = await TribePost.insertMany(posts);
-        res.json({ msg: 'Tribe posts seeded!', count: saved.length });
+        // Delete all existing posts
+        const existing = await db.collection('tribePosts').get();
+        const deleteBatch = db.batch();
+        existing.docs.forEach(doc => deleteBatch.delete(doc.ref));
+        await deleteBatch.commit();
+
+        // Insert new posts
+        const insertBatch = db.batch();
+        posts.forEach(post => {
+            const ref = db.collection('tribePosts').doc();
+            insertBatch.set(ref, post);
+        });
+        await insertBatch.commit();
+
+        res.json({ msg: 'Tribe posts seeded!', count: posts.length });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
