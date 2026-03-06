@@ -14,6 +14,17 @@ router.get('/destinations', async (req, res) => {
   }
 });
 
+// Fetch trails from Firestore
+router.get('/trails', async (req, res) => {
+  try {
+    const snapshot = await db.collection('trails').orderBy('createdAt', 'desc').get();
+    const trails = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(trails);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch trails', error: err.message });
+  }
+});
+
 // Example: Demo trips endpoint (static for now)
 router.get('/trips', (req, res) => {
   res.json([
