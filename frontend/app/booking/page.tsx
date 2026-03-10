@@ -135,106 +135,122 @@ export default function BookingPage() {
     ]
 
     const handleDownloadPDF = () => {
-        const doc = new jsPDF()
+        try {
+            const doc = new jsPDF()
 
-        // Brand colors
-        const brandColor = [16, 185, 129] // Emerald 500
+            // Brand colors
+            const brandColor = [16, 185, 129] // Emerald 500
 
-        // Header Section
-        doc.setFillColor(brandColor[0], brandColor[1], brandColor[2])
-        doc.rect(0, 0, 210, 40, 'F')
-        doc.setTextColor(255, 255, 255)
-        doc.setFontSize(24)
-        doc.setFont('helvetica', 'bold')
-        doc.text("Tourifyy", 14, 25)
+            // Header Section
+            doc.setFillColor(brandColor[0], brandColor[1], brandColor[2])
+            doc.rect(0, 0, 210, 40, 'F')
+            doc.setTextColor(255, 255, 255)
+            doc.setFontSize(24)
+            doc.setFont('helvetica', 'bold')
+            doc.text("Tourifyy", 14, 25)
 
-        doc.setFontSize(10)
-        doc.setFont('helvetica', 'normal')
-        doc.text("Booking Invoice & Trip Outline", 14, 32)
+            doc.setFontSize(10)
+            doc.setFont('helvetica', 'normal')
+            doc.text("Booking Invoice & Trip Outline", 14, 32)
 
-        doc.setFontSize(10)
-        doc.text(`Date: ${new Date().toLocaleDateString()}`, 196, 25, { align: 'right' })
-        doc.text(`Booking ID: ${bookingId || "TF-X" + Math.floor(Math.random() * 10000)}`, 196, 32, { align: 'right' })
+            doc.setFontSize(10)
+            doc.text(`Date: ${new Date().toLocaleDateString()}`, 196, 25, { align: 'right' })
+            doc.text(`Booking ID: ${bookingId || "TF-X" + Math.floor(Math.random() * 10000)}`, 196, 32, { align: 'right' })
 
-        // Customer Details
-        doc.setTextColor(60, 60, 60)
-        doc.setFontSize(12)
-        doc.setFont('helvetica', 'bold')
-        doc.text("Billed To:", 14, 55)
-        doc.setFontSize(10)
-        doc.setFont('helvetica', 'normal')
-        doc.text(`Name: ${user?.name || "Customer"}`, 14, 62)
-        doc.text(`Email: ${user?.email || "N/A"}`, 14, 68)
+            // Customer Details
+            doc.setTextColor(60, 60, 60)
+            doc.setFontSize(12)
+            doc.setFont('helvetica', 'bold')
+            doc.text("Billed To:", 14, 55)
+            doc.setFontSize(10)
+            doc.setFont('helvetica', 'normal')
+            doc.text(`Name: ${user?.name || "Customer"}`, 14, 62)
+            doc.text(`Email: ${user?.email || "N/A"}`, 14, 68)
 
-        // Trip Summary
-        doc.setFontSize(12)
-        doc.setFont('helvetica', 'bold')
-        doc.text("Trip Summary:", 120, 55)
-        doc.setFontSize(10)
-        doc.setFont('helvetica', 'normal')
-        doc.text(`Destination: ${bookingData.destination}`, 120, 62)
-        doc.text(`Dates: ${bookingData.startDate || 'TBD'} to ${bookingData.endDate || 'TBD'}`, 120, 68)
-        doc.text(`Travelers: ${bookingData.travelers} Persons`, 120, 74)
-        doc.text(`Status: ${bookingData.status || "Pending"}`, 120, 80)
+            // Trip Summary
+            doc.setFontSize(12)
+            doc.setFont('helvetica', 'bold')
+            doc.text("Trip Summary:", 120, 55)
+            doc.setFontSize(10)
+            doc.setFont('helvetica', 'normal')
+            doc.text(`Destination: ${bookingData.destination}`, 120, 62)
+            doc.text(`Dates: ${bookingData.startDate || 'TBD'} to ${bookingData.endDate || 'TBD'}`, 120, 68)
+            doc.text(`Travelers: ${bookingData.travelers} Persons`, 120, 74)
+            doc.text(`Status: ${(bookingData.status || "Pending").toUpperCase()}`, 120, 80)
 
-        // Pricing Breakdown Table
-        doc.setFontSize(14)
-        doc.setFont('helvetica', 'bold')
-        doc.text("Cost Breakdown", 14, 100)
-
-        const tableColumn = ["Description", "Amount (INR)"]
-        const tableRows = breakdown.map(item => [item.label, `Rs. ${item.value.toLocaleString()}`])
-        // @ts-ignore
-        doc.autoTable({
-            startY: 105,
-            head: [tableColumn],
-            body: tableRows,
-            theme: 'striped',
-            headStyles: { fillColor: brandColor, halign: 'left' },
-            bodyStyles: { halign: 'left' },
-            alternateRowStyles: { fillColor: [245, 250, 248] },
-            margin: { left: 14 }
-        })
-
-        // @ts-ignore
-        const finalY = doc.lastAutoTable.finalY || 150
-
-        // Total
-        doc.setFontSize(12)
-        doc.setFont('helvetica', 'bold')
-        doc.text(`Total Paid: Rs. ${totalBill.toLocaleString()}`, 196, finalY + 10, { align: 'right' })
-
-        // Itinerary (if available)
-        if (bookingData.itinerary && bookingData.itinerary.length > 0) {
+            // Pricing Breakdown Table
             doc.setFontSize(14)
             doc.setFont('helvetica', 'bold')
-            doc.text("Planned Itinerary", 14, finalY + 30)
+            doc.text("Cost Breakdown", 14, 100)
 
-            const itinColumns = ["Day", "Title", "Date"]
-            const itinRows = bookingData.itinerary.map((day: any) => [
-                day.day,
-                day.title,
-                day.date || "TBD"
-            ])
+            const tableColumn = ["Description", "Amount (INR)"]
+            const tableRows = breakdown.map(item => [item.label, `Rs. ${item.value.toLocaleString()}`])
             // @ts-ignore
             doc.autoTable({
-                startY: finalY + 35,
-                head: [itinColumns],
-                body: itinRows,
-                theme: 'plain',
-                headStyles: { fillColor: [240, 240, 240], textColor: [40, 40, 40] }
+                startY: 105,
+                head: [tableColumn],
+                body: tableRows,
+                theme: 'striped',
+                headStyles: { fillColor: brandColor, halign: 'left' },
+                bodyStyles: { halign: 'left' },
+                alternateRowStyles: { fillColor: [245, 250, 248] },
+                margin: { left: 14 }
             })
+
+            // @ts-ignore
+            const finalY = doc.lastAutoTable?.finalY || 150
+
+            // Total
+            doc.setFontSize(12)
+            doc.setFont('helvetica', 'bold')
+            doc.text(`Total Paid: Rs. ${totalBill.toLocaleString()}`, 196, finalY + 10, { align: 'right' })
+
+            // Itinerary
+            if (bookingData.itinerary) {
+                doc.setFontSize(14)
+                doc.setFont('helvetica', 'bold')
+                doc.text("Planned Itinerary", 14, finalY + 30)
+
+                let itinRows: any[] = []
+                if (Array.isArray(bookingData.itinerary)) {
+                    itinRows = bookingData.itinerary.map((day: any) => [
+                        day.day || "Day X",
+                        day.title || day.description || "Activity",
+                        day.date || "TBD"
+                    ])
+                } else if (typeof bookingData.itinerary === 'string') {
+                    // Handle string itinerary by splitting lines
+                    itinRows = bookingData.itinerary.split('\n')
+                        .filter((line: string) => line.trim().length > 0)
+                        .map((line: string, idx: number) => [`Day ${idx + 1}`, line.trim(), "TBD"])
+                }
+
+                if (itinRows.length > 0) {
+                    // @ts-ignore
+                    doc.autoTable({
+                        startY: finalY + 35,
+                        head: [["Step", "Activity Description", "Time/Date"]],
+                        body: itinRows,
+                        theme: 'plain',
+                        headStyles: { fillColor: [240, 240, 240], textColor: [40, 40, 40] },
+                        styles: { fontSize: 9 }
+                    })
+                }
+            }
+
+            // Footer
+            doc.setFontSize(10)
+            doc.setTextColor(150, 150, 150)
+            // @ts-ignore
+            const pageHeight = doc.internal.pageSize.getHeight()
+            doc.text("Thank you for choosing Tourifyy for your ecological travel.", 105, pageHeight - 15, { align: 'center' })
+
+            // Save
+            doc.save(`Tourifyy_Invoice_${bookingId || "Ticket"}.pdf`)
+        } catch (error) {
+            console.error("PDF generation error:", error)
+            alert("Could not generate PDF. Please try again or contact support.")
         }
-
-        // Footer
-        doc.setFontSize(10)
-        doc.setTextColor(150, 150, 150)
-        // @ts-ignore
-        const pageHeight = doc.internal.pageSize.getHeight()
-        doc.text("Thank you for choosing Tourifyy for your ecological travel.", 105, pageHeight - 15, { align: 'center' })
-
-        // Save
-        doc.save(`Tourifyy_Invoice_${bookingId || "Ticket"}.pdf`)
     }
 
     return (
