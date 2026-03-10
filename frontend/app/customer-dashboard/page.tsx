@@ -38,10 +38,12 @@ export default function CustomerDashboard() {
     const [destinations, setDestinations] = useState<any[]>([])
     const [notifications, setNotifications] = useState<any[]>([])
     const [tribeCount, setTribeCount] = useState<number>(0)
+    const [bookings, setBookings] = useState<any[]>([])
 
     // Loading states
     const [loadingProfile, setLoadingProfile] = useState(true)
     const [loadingDestinations, setLoadingDestinations] = useState(true)
+    const [loadingBookings, setLoadingBookings] = useState(true)
 
     // Auth guard
     useEffect(() => {
@@ -91,6 +93,21 @@ export default function CustomerDashboard() {
             .then(d => setTribeCount(Array.isArray(d) ? d.length : 0))
             .catch(() => setTribeCount(0))
     }, [])
+
+    // Fetch user bookings
+    useEffect(() => {
+        if (!token) return
+        setLoadingBookings(true)
+        fetch(`${BACKEND}/api/bookings/my`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        })
+            .then(res => res.json())
+            .then(data => {
+                setBookings(Array.isArray(data) ? data : [])
+                setLoadingBookings(false)
+            })
+            .catch(() => setLoadingBookings(false))
+    }, [token])
 
     const unreadCount = notifications.filter(n => !n.isRead).length
     const displayUser = profile || user
@@ -361,6 +378,66 @@ export default function CustomerDashboard() {
                                                 Plan <ArrowRight className="w-3 h-3" />
                                             </button>
                                         </Link>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+                    </motion.div>
+
+                    {/* Recent Bookings Section */}
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+                        className="rounded-2xl border border-white/5 p-5"
+                        style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.01) 100%)" }}>
+                        <div className="flex items-center justify-between mb-5">
+                            <h2 className="font-bold text-white text-sm flex items-center gap-2">
+                                <Plus className="w-4 h-4 text-emerald-400" /> Recent Trip Requests
+                                <span className="text-[10px] text-white/30 font-normal">status & updates</span>
+                            </h2>
+                            <Link href="/my-bookings">
+                                <button className="text-xs text-emerald-400 hover:text-emerald-300 font-medium transition-colors flex items-center gap-1">
+                                    View All <ChevronRight className="w-3 h-3" />
+                                </button>
+                            </Link>
+                        </div>
+
+                        {loadingBookings ? (
+                            <div className="p-8 flex flex-col items-center gap-3">
+                                <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                <p className="text-xs text-white/30">Syncing trip data...</p>
+                            </div>
+                        ) : bookings.length === 0 ? (
+                            <div className="p-8 text-center bg-white/[0.02] rounded-2xl border border-dashed border-white/10">
+                                <p className="text-xs text-white/30">No active trip requests found.</p>
+                                <Link href="/planner">
+                                    <button className="mt-3 text-[11px] text-emerald-400 font-bold hover:underline">Start Planning Now →</button>
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {bookings.slice(0, 3).map((b, i) => (
+                                    <motion.div key={b.id || i}
+                                        initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i }}
+                                        className="flex items-center justify-between p-4 rounded-xl border border-white/5 hover:border-emerald-500/20 hover:bg-white/3 transition-all cursor-pointer"
+                                        onClick={() => router.push(`/booking?id=${b.id}`)}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                                                <MapPin className="w-5 h-5 text-emerald-400" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-semibold text-white/90">{b.destination}</p>
+                                                <p className="text-[10px] text-white/40">{b.startDate || 'TBD'} · {b.travelers} Persons</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider mb-1 inline-block ${b.status === 'approved' ? 'bg-emerald-500/10 text-emerald-500' :
+                                                    b.status === 'rejected' ? 'bg-red-500/10 text-red-500' :
+                                                        'bg-amber-500/10 text-amber-500'
+                                                }`}>
+                                                {b.status || 'pending'}
+                                            </div>
+                                            <p className="text-xs font-bold text-white/60">₹{b.totalCost?.toLocaleString()}</p>
+                                        </div>
                                     </motion.div>
                                 ))}
                             </div>

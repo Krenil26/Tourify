@@ -51,7 +51,7 @@ export default function MyBookingsPage() {
     return (
         <main className="min-h-screen bg-background text-foreground overflow-hidden">
             <Navbar />
-            
+
             <div className="pt-24 pb-16 max-w-5xl mx-auto px-4 sm:px-6">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                     {/* Header */}
@@ -77,7 +77,7 @@ export default function MyBookingsPage() {
                             </div>
                         ) : (
                             bookings.map((booking, i) => (
-                                <motion.div 
+                                <motion.div
                                     key={booking.id || i}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -87,20 +87,24 @@ export default function MyBookingsPage() {
                                     <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center shrink-0 ring-1 ring-emerald-500/20">
                                         <MapPin className="w-8 h-8 text-emerald-500" />
                                     </div>
-                                    
+
                                     <div className="flex-1 space-y-4">
                                         <div>
                                             <div className="flex items-center gap-3 mb-1">
                                                 <h3 className="text-xl font-bold">{booking.destination}</h3>
-                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
-                                                    booking.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                                                    booking.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 
-                                                    'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                                }`}>
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${booking.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                                        booking.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                                            'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                    }`}>
                                                     {booking.status || 'Pending'}
                                                 </span>
                                             </div>
                                             <p className="text-xs text-muted-foreground font-mono">ID: {booking.id}</p>
+                                            <p className="text-[11px] mt-2 text-white/50 italic">
+                                                {booking.status === 'approved' ? '✓ Your request has been accepted by our team.' :
+                                                    booking.status === 'rejected' ? '✕ This request could not be approved.' :
+                                                        '⋯ Pending verification by our expert curators.'}
+                                            </p>
                                         </div>
 
                                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
