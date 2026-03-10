@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { motion } from "framer-motion"
-import { Calendar, Users, Briefcase, MapPin, CheckCircle, Clock, XCircle, ChevronRight, Activity } from "lucide-react"
+import { Calendar, Users, Briefcase, MapPin, CheckCircle, Clock, XCircle, ChevronRight, Activity, Download } from "lucide-react"
 import Link from "next/link"
+import jsPDF from "jspdf"
+import "jspdf-autotable"
 
 const BACKEND = "https://tourify-4cuu.onrender.com"
 
@@ -39,6 +41,92 @@ export default function MyBookingsPage() {
                 setLoading(false)
             })
     }, [router])
+
+    const handleDownloadPDF = (booking: any) => {
+        const doc = new jsPDF()
+
+        // Brand colors
+        const primaryColor = [16, 185, 129] // emerald-500
+
+        // Header
+        doc.setFillColor(245, 255, 250)
+        doc.rect(0, 0, 210, 40, 'F')
+
+        doc.setFontSize(24)
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
+        doc.setFont("helvetica", "bold")
+        doc.text("TOURIFYY", 20, 25)
+
+        doc.setFontSize(10)
+        doc.setTextColor(100, 100, 100)
+        doc.setFont("helvetica", "normal")
+        doc.text("ECOLOGICAL TRAILS & CONSERVATION", 20, 32)
+
+        doc.setFontSize(18)
+        doc.setTextColor(60, 60, 60)
+        doc.text("BOOKING INVOICE", 140, 25)
+
+        // Horizontal Line
+        doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2])
+        doc.setLineWidth(1)
+        doc.line(20, 45, 190, 45)
+
+        // Booking Summary
+        doc.setFontSize(12)
+        doc.setTextColor(40, 40, 40)
+        doc.setFont("helvetica", "bold")
+        doc.text("Booking Summary", 20, 60)
+
+        const summaryData = [
+            ["Destination", booking.destination],
+            ["Booking ID", booking.id || "N/A"],
+            ["Customer", user?.name || "Explorer"],
+            ["Travel Dates", `${booking.startDate || "TBD"} - ${booking.endDate || "TBD"}`],
+            ["Travelers", `${booking.travelers} Persons`],
+            ["Status", (booking.status || "Pending").toUpperCase()],
+        ]
+
+            ; (doc as any).autoTable({
+                startY: 65,
+                head: [],
+                body: summaryData,
+                theme: 'plain',
+                styles: { fontSize: 10, cellPadding: 2 },
+                columnStyles: { 0: { fontStyle: 'bold', width: 40 } }
+            })
+
+        // Cost Breakdown
+        const finalY = (doc as any).lastAutoTable.finalY + 15
+        doc.setFontSize(12)
+        doc.text("Financial breakdown", 20, finalY)
+
+        const totalBill = booking.totalCost || 0
+        const costData = [
+            ["Eco-Trail Package", `INR ${totalBill.toLocaleString()}`],
+            ["Conservation Fee", "INCLUDED"],
+            ["Taxes & Levis", "INCLUDED"],
+            ["TOTAL AMOUNT PAID", `INR ${totalBill.toLocaleString()}`],
+        ]
+
+            ; (doc as any).autoTable({
+                startY: finalY + 5,
+                head: [['Description', 'Amount']],
+                body: costData,
+                theme: 'striped',
+                headStyles: { fillColor: primaryColor },
+                styles: { fontSize: 10 }
+            })
+
+        // Footer Note
+        const bottomY = (doc as any).lastAutoTable.finalY + 20
+        doc.setFontSize(9)
+        doc.setTextColor(120, 120, 120)
+        doc.setFont("helvetica", "italic")
+        doc.text("Thank you for choosing Tourifyy. 10% of your booking cost goes directly towards", 20, bottomY)
+        doc.text("reforestation and wildlife protection programs in your destination.", 20, bottomY + 5)
+
+        doc.save(`Tourifyy_${booking.destination}_Invoice.pdf`)
+    }
 
     if (loading || !user) {
         return (
@@ -93,8 +181,8 @@ export default function MyBookingsPage() {
                                             <div className="flex items-center gap-3 mb-1">
                                                 <h3 className="text-xl font-bold">{booking.destination}</h3>
                                                 <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${booking.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                                        booking.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                                            'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                    booking.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                                        'bg-amber-500/10 text-amber-400 border-amber-500/20'
                                                     }`}>
                                                     {booking.status || 'Pending'}
                                                 </span>
@@ -122,7 +210,14 @@ export default function MyBookingsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="shrink-0 flex items-center">
+                                    <div className="shrink-0 flex flex-col sm:flex-row items-center gap-3">
+                                        <button
+                                            onClick={() => handleDownloadPDF(booking)}
+                                            className="w-full md:w-auto px-4 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-sm font-semibold transition-all border border-emerald-500/20 flex items-center justify-center gap-2"
+                                            title="Download Invoice PDF"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                        </button>
                                         <Link href={`/booking?id=${booking.id}`}>
                                             <button className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-white/5 hover:bg-emerald-500/10 text-white text-sm font-semibold transition-all border border-white/10 hover:border-emerald-500/30 flex items-center justify-center gap-2">
                                                 View Details <ChevronRight className="w-4 h-4" />

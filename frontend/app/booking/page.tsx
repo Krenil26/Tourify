@@ -385,8 +385,14 @@ export default function BookingPage() {
                             <CheckCircle2 className="w-12 h-12 text-emerald-500" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-bold mb-3">Booking Request Sent!</h1>
-                            <p className="text-muted-foreground italic">Your ecological trail for {bookingData.destination} is processing.</p>
+                            <h1 className="text-4xl font-bold mb-3">
+                                {new URLSearchParams(window.location.search).get("id") ? "Booking Details" : "Booking Request Sent!"}
+                            </h1>
+                            <p className="text-muted-foreground italic">
+                                {new URLSearchParams(window.location.search).get("id")
+                                    ? `Reviewing your ecological trail for ${bookingData.destination}.`
+                                    : `Your ecological trail for ${bookingData.destination} is processing.`}
+                            </p>
                         </div>
 
                         <div className="glass-card rounded-[2.5rem] p-8 border-white/5 space-y-6">
