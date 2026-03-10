@@ -27,6 +27,8 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
+const BACKEND = "https://tourify-4cuu.onrender.com"
+
 const upcomingTrips = [
   {
     id: 1,
@@ -104,19 +106,33 @@ const budgetCategories = [
 
 export function TripDashboard() {
   const router = useRouter()
-  const [activeTrip, setActiveTrip] = useState(upcomingTrips[0])
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [bookings, setBookings] = useState<any[]>([])
+  const [activeTrip, setActiveTrip] = useState<any>(null)
 
   useEffect(() => {
     const stored = sessionStorage.getItem("user")
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored))
-      } catch (e) {
-        console.error("Failed to parse user from sessionStorage", e)
-      }
-      setIsLoading(false)
+    const token = sessionStorage.getItem("token")
+    if (stored && token) {
+      const parsedUser = JSON.parse(stored)
+      setUser(parsedUser)
+
+      // Fetch real bookings
+      fetch(`${BACKEND}/api/bookings/my`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          const sorted = Array.isArray(data) ? data : []
+          setBookings(sorted)
+          if (sorted.length > 0) setActiveTrip(sorted[0])
+          setIsLoading(false)
+        })
+        .catch(err => {
+          console.error("Dashboard fetch error:", err)
+          setIsLoading(false)
+        })
     } else {
       router.push("/login")
     }
@@ -129,6 +145,8 @@ export function TripDashboard() {
       </div>
     )
   }
+
+  const BACKEND_URL = "https://tourify-4cuu.onrender.com" // Ensure consistency
 
   const totalBudget = budgetCategories.reduce((acc, cat) => acc + cat.budget, 0)
   const totalSpent = budgetCategories.reduce((acc, cat) => acc + cat.spent, 0)
@@ -177,62 +195,70 @@ export function TripDashboard() {
               </div>
 
               <div className="space-y-4">
-                {upcomingTrips.map((trip) => (
-                  <div
-                    key={trip.id}
-                    onClick={() => setActiveTrip(trip)}
-                    className={`flex flex-col sm:flex-row gap-4 p-4 rounded-xl cursor-pointer transition-all ${activeTrip.id === trip.id
-                      ? "bg-primary/10 border border-primary/30"
-                      : "bg-secondary hover:bg-secondary/80"
-                      }`}
-                  >
-                    <img
-                      src={trip.image || "/placeholder.svg"}
-                      alt={trip.destination}
-                      className="w-full sm:w-24 h-32 sm:h-24 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="font-semibold text-foreground">{trip.destination}</h3>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Calendar className="w-3.5 h-3.5" />
-                            <span>
-                              {trip.startDate} - {trip.endDate}
-                            </span>
+                {bookings.length === 0 ? (
+                  <div className="text-center py-10 bg-secondary/30 rounded-xl border border-dashed border-border">
+                    <p className="text-muted-foreground text-sm mb-4">You don't have any trips planned yet.</p>
+                    <Link href="/planner">
+                      <Button variant="outline" size="sm" className="rounded-lg">Start Planning</Button>
+                    </Link>
+                  </div>
+                ) : (
+                  bookings.map((trip) => (
+                    <div
+                      key={trip.id}
+                      onClick={() => setActiveTrip(trip)}
+                      className={`flex flex-col sm:flex-row gap-4 p-4 rounded-xl cursor-pointer transition-all ${activeTrip?.id === trip.id
+                        ? "bg-primary/10 border border-primary/30"
+                        : "bg-secondary hover:bg-secondary/80"
+                        }`}
+                    >
+                      <div className="w-full sm:w-24 h-32 sm:h-24 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                        <MapPin className="w-8 h-8 text-emerald-500" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h3 className="font-semibold text-foreground">{trip.destination}</h3>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Calendar className="w-3.5 h-3.5" />
+                              <span>
+                                {trip.startDate} - {trip.endDate}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${trip.status === "confirmed" ? "bg-chart-3/20 text-chart-3" : "bg-chart-4/20 text-chart-4"
-                            }`}
-                        >
-                          {trip.status === "confirmed" ? "Confirmed" : "Planning"}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-4 text-sm">
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Clock className="w-3.5 h-3.5" />
-                          <span>{trip.daysLeft} days left</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-muted-foreground">
-                          <Users className="w-3.5 h-3.5" />
-                          <span>{trip.travelers} travelers</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-3">
-                        <div className="flex items-center justify-between text-sm mb-1">
-                          <span className="text-muted-foreground">Payment Progress</span>
-                          <span className="text-foreground font-medium">
-                            ₹{trip.paidAmount} / ₹{trip.totalCost}
+                          <span
+                            className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${trip.status === "approved" ? "bg-emerald-500/20 text-emerald-500" :
+                              trip.status === "rejected" ? "bg-red-500/20 text-red-500" :
+                                "bg-amber-500/20 text-amber-500"
+                              }`}
+                          >
+                            {trip.status || "Pending"}
                           </span>
                         </div>
-                        <Progress value={(trip.paidAmount / trip.totalCost) * 100} className="h-2" />
+
+                        <div className="flex items-center gap-4 text-sm">
+                          <div className="flex items-center gap-1 text-muted-foreground font-semibold text-emerald-400">
+                            <span>₹{trip.totalCost?.toLocaleString()}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Users className="w-3.5 h-3.5" />
+                            <span>{trip.travelers} travelers</span>
+                          </div>
+                        </div>
+
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between text-sm mb-1">
+                            <span className="text-muted-foreground">Payment Status</span>
+                            <span className="text-foreground font-medium">
+                              Verified
+                            </span>
+                          </div>
+                          <Progress value={100} className="h-2" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
@@ -263,25 +289,19 @@ export function TripDashboard() {
 
               {/* Mini Itinerary */}
               <div className="space-y-3">
-                <h3 className="text-sm font-medium text-muted-foreground">Day 1 - Arrival</h3>
-                {[
-                  { time: "10:00 AM", task: "Arrive at Narita Airport", done: true },
-                  { time: "12:00 PM", task: "Check-in at Park Hyatt", done: true },
-                  { time: "3:00 PM", task: "Explore Shibuya Crossing", done: false },
-                  { time: "7:00 PM", task: "Dinner at Ichiran Ramen", done: false },
-                ].map((item, index) => (
-                  <div key={index} className="flex items-center gap-3 text-sm">
-                    {item.done ? (
-                      <CheckCircle2 className="w-4 h-4 text-chart-3 shrink-0" />
-                    ) : (
-                      <Circle className="w-4 h-4 text-muted-foreground shrink-0" />
-                    )}
-                    <span className="text-muted-foreground w-20">{item.time}</span>
-                    <span className={item.done ? "text-muted-foreground line-through" : "text-foreground"}>
-                      {item.task}
-                    </span>
+                <h3 className="text-sm font-medium text-muted-foreground">Itinerary - Day by Day</h3>
+                {activeTrip?.itinerary ? (
+                  activeTrip.itinerary.split('\n').filter((line: string) => line.trim()).slice(0, 5).map((line: string, index: number) => (
+                    <div key={index} className="flex items-start gap-3 text-sm">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <span className="text-foreground">{line}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 rounded-xl bg-secondary/50 border border-dashed border-border text-center">
+                    <p className="text-xs text-muted-foreground italic">No itinerary details available for this request.</p>
                   </div>
-                ))}
+                )}
               </div>
 
               <Button className="w-full mt-6 bg-secondary text-foreground hover:bg-primary hover:text-primary-foreground">
