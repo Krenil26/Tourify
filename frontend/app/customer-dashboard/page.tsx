@@ -15,6 +15,7 @@ const BACKEND = "https://tourify-4cuu.onrender.com"
 
 const sidebarLinks = [
     { href: "/customer-dashboard", icon: LayoutDashboard, label: "Overview" },
+    { href: "/my-bookings", icon: Calendar, label: "My Bookings" },
     { href: "/planner", icon: Compass, label: "AI Planner" },
     { href: "/destinations", icon: Map, label: "Explore Trails" },
     { href: "/nature-guard", icon: Shield, label: "Nature Guard" },
