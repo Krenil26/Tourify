@@ -164,7 +164,7 @@ export default function LoginPage() {
 
                             <div className="flex items-center gap-2 text-[10px] text-muted-foreground/40 font-medium px-4 bg-white/5 py-3 rounded-xl border border-white/5">
                                 <ShieldCheck className="w-4 h-4 text-emerald-500/50" />
-                                <span>Secured by Tourify Protected Auth</span>
+                                <span>Secured by Tourifyy Protected Auth</span>
                             </div>
 
                             <div className="text-center text-sm text-muted-foreground">

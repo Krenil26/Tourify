@@ -124,7 +124,7 @@ export default function CustomerDashboard() {
                                     <Leaf className="w-5 h-5 text-white" />
                                 </div>
                                 <div>
-                                    <div className="font-bold text-sm text-white">Tourify<span className="text-emerald-400">.ai</span></div>
+                                    <div className="font-bold text-sm text-white">Tourifyy</div>
                                     <div className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Explorer Hub</div>
                                 </div>
                             </Link>
