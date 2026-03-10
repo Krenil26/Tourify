@@ -51,10 +51,13 @@ router.get("/my", authenticate, async (req, res) => {
     try {
         const snapshot = await db.collection('bookings')
             .where('userId', '==', req.user.id)
-            .orderBy('createdAt', 'desc')
             .get();
 
-        const bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        let bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Sort in-memory to avoid composite index requirement in Firestore
+        bookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
         res.json(bookings);
     } catch (err) {
         console.error("Fetch bookings error:", err);
@@ -66,11 +69,13 @@ router.get("/my", authenticate, async (req, res) => {
 router.get("/all", authenticate, async (req, res) => {
     if (req.user.role !== "admin") return res.status(403).json({ message: "Admin access required" });
     try {
-        const snapshot = await db.collection('bookings')
-            .orderBy('createdAt', 'desc')
-            .get();
+        const snapshot = await db.collection('bookings').get();
 
-        const bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        let bookings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Sort in-memory
+        bookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
         res.json(bookings);
     } catch (err) {
         res.status(500).json({ message: "Server error fetching all bookings", error: err.message });

@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { motion } from "framer-motion"
-import { Calendar, Users, Briefcase, MapPin, CheckCircle, Clock, XCircle, ChevronRight, Activity } from "lucide-react"
+import { Calendar, Users, Briefcase, MapPin, CheckCircle, Clock, XCircle, ChevronRight, Activity, Download } from "lucide-react"
 import Link from "next/link"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
 
 const BACKEND = "https://tourify-4cuu.onrender.com"
 
@@ -26,19 +28,114 @@ export default function MyBookingsPage() {
         }
         setUser(JSON.parse(storedUser))
 
-        fetch(`${BACKEND}/api/bookings/my`, {
-            headers: { "Authorization": `Bearer ${storedToken}` }
-        })
-            .then(res => res.json())
-            .then(data => {
-                setBookings(Array.isArray(data) ? data : [])
-                setLoading(false)
+        const fetchBookings = () => {
+            fetch(`${BACKEND}/api/bookings/my`, {
+                headers: { "Authorization": `Bearer ${storedToken}` }
             })
-            .catch(err => {
-                console.error("Fetch error:", err)
-                setLoading(false)
-            })
+                .then(res => res.json())
+                .then(data => {
+                    setBookings(Array.isArray(data) ? data : [])
+                    setLoading(false)
+                })
+                .catch(err => {
+                    console.error("Fetch error:", err)
+                    setLoading(false)
+                })
+        }
+
+        // Initial fetch
+        fetchBookings()
+
+        // Polling for live updates every 10 seconds
+        const interval = setInterval(fetchBookings, 10000)
+        return () => clearInterval(interval)
     }, [router])
+
+    const handleDownloadPDF = (booking: any) => {
+        const doc = new jsPDF()
+
+        // Brand colors
+        const primaryColor = [16, 185, 129] // emerald-500
+
+        // Header
+        doc.setFillColor(245, 255, 250)
+        doc.rect(0, 0, 210, 40, 'F')
+
+        doc.setFontSize(24)
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2])
+        doc.setFont("helvetica", "bold")
+        doc.text("TOURIFYY", 20, 25)
+
+        doc.setFontSize(10)
+        doc.setTextColor(100, 100, 100)
+        doc.setFont("helvetica", "normal")
+        doc.text("ECOLOGICAL TRAILS & CONSERVATION", 20, 32)
+
+        doc.setFontSize(18)
+        doc.setTextColor(60, 60, 60)
+        doc.text("BOOKING INVOICE", 140, 25)
+
+        // Horizontal Line
+        doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2])
+        doc.setLineWidth(1)
+        doc.line(20, 45, 190, 45)
+
+        // Booking Summary
+        doc.setFontSize(12)
+        doc.setTextColor(40, 40, 40)
+        doc.setFont("helvetica", "bold")
+        doc.text("Booking Summary", 20, 60)
+
+        const summaryData = [
+            ["Destination", booking.destination],
+            ["Booking ID", booking.id || "N/A"],
+            ["Customer", user?.name || "Explorer"],
+            ["Travel Dates", `${booking.startDate || "TBD"} - ${booking.endDate || "TBD"}`],
+            ["Travelers", `${booking.travelers} Persons`],
+            ["Status", (booking.status || "Pending").toUpperCase()],
+        ]
+
+        autoTable(doc, {
+            startY: 65,
+            head: [],
+            body: summaryData,
+            theme: 'plain',
+            styles: { fontSize: 10, cellPadding: 2 },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } }
+        })
+
+        // Cost Breakdown
+        const finalY = (doc as any).lastAutoTable.finalY + 15
+        doc.setFontSize(12)
+        doc.text("Financial breakdown", 20, finalY)
+
+        const totalBill = booking.totalCost || 0
+        const costData = [
+            ["Eco-Trail Package", `INR ${totalBill.toLocaleString()}`],
+            ["Conservation Fee", "INCLUDED"],
+            ["Taxes & Levis", "INCLUDED"],
+            ["TOTAL AMOUNT PAID", `INR ${totalBill.toLocaleString()}`],
+        ]
+
+        autoTable(doc, {
+            startY: finalY + 5,
+            head: [['Description', 'Amount']],
+            body: costData,
+            theme: 'striped',
+            headStyles: { fillColor: primaryColor as [number, number, number] },
+            styles: { fontSize: 10 }
+        })
+
+        // Footer Note
+        const bottomY = (doc as any).lastAutoTable.finalY + 20
+        doc.setFontSize(9)
+        doc.setTextColor(120, 120, 120)
+        doc.setFont("helvetica", "italic")
+        doc.text("Thank you for choosing Tourifyy. 10% of your booking cost goes directly towards", 20, bottomY)
+        doc.text("reforestation and wildlife protection programs in your destination.", 20, bottomY + 5)
+
+        doc.save(`Tourifyy_${booking.destination}_Invoice.pdf`)
+    }
 
     if (loading || !user) {
         return (
@@ -51,7 +148,7 @@ export default function MyBookingsPage() {
     return (
         <main className="min-h-screen bg-background text-foreground overflow-hidden">
             <Navbar />
-            
+
             <div className="pt-24 pb-16 max-w-5xl mx-auto px-4 sm:px-6">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                     {/* Header */}
@@ -77,7 +174,7 @@ export default function MyBookingsPage() {
                             </div>
                         ) : (
                             bookings.map((booking, i) => (
-                                <motion.div 
+                                <motion.div
                                     key={booking.id || i}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -87,20 +184,24 @@ export default function MyBookingsPage() {
                                     <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center shrink-0 ring-1 ring-emerald-500/20">
                                         <MapPin className="w-8 h-8 text-emerald-500" />
                                     </div>
-                                    
+
                                     <div className="flex-1 space-y-4">
                                         <div>
                                             <div className="flex items-center gap-3 mb-1">
                                                 <h3 className="text-xl font-bold">{booking.destination}</h3>
-                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
-                                                    booking.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                                                    booking.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 
-                                                    'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                                }`}>
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${booking.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                                    booking.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                                        'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                    }`}>
                                                     {booking.status || 'Pending'}
                                                 </span>
                                             </div>
                                             <p className="text-xs text-muted-foreground font-mono">ID: {booking.id}</p>
+                                            <p className="text-[11px] mt-2 text-white/50 italic">
+                                                {booking.status === 'approved' ? '✓ Your request has been accepted by our team.' :
+                                                    booking.status === 'rejected' ? '✕ This request could not be approved.' :
+                                                        '⋯ Pending verification by our expert curators.'}
+                                            </p>
                                         </div>
 
                                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -118,7 +219,14 @@ export default function MyBookingsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="shrink-0 flex items-center">
+                                    <div className="shrink-0 flex flex-col sm:flex-row items-center gap-3">
+                                        <button
+                                            onClick={() => handleDownloadPDF(booking)}
+                                            className="w-full md:w-auto px-4 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-sm font-semibold transition-all border border-emerald-500/20 flex items-center justify-center gap-2"
+                                            title="Download Invoice PDF"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                        </button>
                                         <Link href={`/booking?id=${booking.id}`}>
                                             <button className="w-full md:w-auto px-5 py-2.5 rounded-xl bg-white/5 hover:bg-emerald-500/10 text-white text-sm font-semibold transition-all border border-white/10 hover:border-emerald-500/30 flex items-center justify-center gap-2">
                                                 View Details <ChevronRight className="w-4 h-4" />
