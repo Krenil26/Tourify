@@ -55,13 +55,13 @@ router.post('/login', async (req, res) => {
     const usersRef = db.collection('users');
     const snapshot = await usersRef.where('email', '==', email).limit(1).get();
 
-    if (snapshot.empty) return res.status(400).json({ message: 'Invalid credentials' });
+    if (snapshot.empty) return res.status(400).json({ message: 'Wrong email address' });
 
     const doc = snapshot.docs[0];
     const user = { id: doc.id, ...doc.data() };
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!isMatch) return res.status(400).json({ message: 'Wrong password' });
 
     const token = jwt.sign(
       { id: user.id, role: user.role },
