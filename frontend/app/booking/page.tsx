@@ -12,7 +12,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import jsPDF from "jspdf"
-import "jspdf-autotable"
+import autoTable from "jspdf-autotable"
 
 const BACKEND = "https://tourify-4cuu.onrender.com"
 
@@ -126,12 +126,15 @@ export default function BookingPage() {
         )
     }
 
-    const totalBill = bookingData.budget * bookingData.travelers
+    const budgetNum = Number(bookingData.budget) || 0
+    const travelersNum = Number(bookingData.travelers) || 0
+    const totalBillNum = budgetNum * travelersNum
+
     const breakdown = [
-        { label: "Flights", value: Math.round(totalBill * 0.4) },
-        { label: "Hotels", value: Math.round(totalBill * 0.3) },
-        { label: "Activities", value: Math.round(totalBill * 0.15) },
-        { label: "Food & Others", value: Math.round(totalBill * 0.15) },
+        { label: "Flights", value: Math.round(totalBillNum * 0.4) },
+        { label: "Hotels", value: Math.round(totalBillNum * 0.3) },
+        { label: "Activities", value: Math.round(totalBillNum * 0.15) },
+        { label: "Food & Others", value: Math.round(totalBillNum * 0.15) },
     ]
 
     const handleDownloadPDF = () => {
@@ -185,25 +188,24 @@ export default function BookingPage() {
 
             const tableColumn = ["Description", "Amount (INR)"]
             const tableRows = breakdown.map(item => [item.label, `Rs. ${item.value.toLocaleString()}`])
-            // @ts-ignore
-            doc.autoTable({
+
+            autoTable(doc, {
                 startY: 105,
                 head: [tableColumn],
                 body: tableRows,
                 theme: 'striped',
-                headStyles: { fillColor: brandColor, halign: 'left' },
+                headStyles: { fillColor: brandColor as [number, number, number], halign: 'left' },
                 bodyStyles: { halign: 'left' },
                 alternateRowStyles: { fillColor: [245, 250, 248] },
                 margin: { left: 14 }
             })
 
-            // @ts-ignore
-            const finalY = doc.lastAutoTable?.finalY || 150
+            const finalY = (doc as any).lastAutoTable?.finalY || 150
 
             // Total
             doc.setFontSize(12)
             doc.setFont('helvetica', 'bold')
-            doc.text(`Total Paid: Rs. ${totalBill.toLocaleString()}`, 196, finalY + 10, { align: 'right' })
+            doc.text(`Total Paid: Rs. ${totalBillNum.toLocaleString()}`, 196, finalY + 10, { align: 'right' })
 
             // Itinerary
             if (bookingData.itinerary) {
@@ -219,15 +221,13 @@ export default function BookingPage() {
                         day.date || "TBD"
                     ])
                 } else if (typeof bookingData.itinerary === 'string') {
-                    // Handle string itinerary by splitting lines
                     itinRows = bookingData.itinerary.split('\n')
                         .filter((line: string) => line.trim().length > 0)
                         .map((line: string, idx: number) => [`Day ${idx + 1}`, line.trim(), "TBD"])
                 }
 
                 if (itinRows.length > 0) {
-                    // @ts-ignore
-                    doc.autoTable({
+                    autoTable(doc, {
                         startY: finalY + 35,
                         head: [["Step", "Activity Description", "Time/Date"]],
                         body: itinRows,
@@ -241,7 +241,6 @@ export default function BookingPage() {
             // Footer
             doc.setFontSize(10)
             doc.setTextColor(150, 150, 150)
-            // @ts-ignore
             const pageHeight = doc.internal.pageSize.getHeight()
             doc.text("Thank you for choosing Tourifyy for your ecological travel.", 105, pageHeight - 15, { align: 'center' })
 
@@ -356,7 +355,7 @@ export default function BookingPage() {
                                         <div className="flex justify-between items-center">
                                             <span className="font-bold">Total Amount</span>
                                             <span className="text-xl font-bold ml-1 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-500">
-                                                ₹{totalBill.toLocaleString()}
+                                                ₹{totalBillNum.toLocaleString()}
                                             </span>
                                         </div>
                                     </div>
@@ -374,7 +373,7 @@ export default function BookingPage() {
                                         onClick={handleConfirmBooking}
                                     >
                                         <span className="relative z-10 flex items-center justify-center">
-                                            {paymentState === "processing" ? "Processing Secure Payment..." : isSubmitting ? "Creating Request..." : "Pay ₹" + (totalBill).toLocaleString() + " & Request Booking"}
+                                            {paymentState === "processing" ? "Processing Secure Payment..." : isSubmitting ? "Creating Request..." : "Pay ₹" + (totalBillNum).toLocaleString() + " & Request Booking"}
                                             {paymentState === "idle" && !isSubmitting && <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />}
                                         </span>
                                         {paymentState === "processing" && (

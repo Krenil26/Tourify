@@ -8,7 +8,7 @@ import { motion } from "framer-motion"
 import { Calendar, Users, Briefcase, MapPin, CheckCircle, Clock, XCircle, ChevronRight, Activity, Download } from "lucide-react"
 import Link from "next/link"
 import jsPDF from "jspdf"
-import "jspdf-autotable"
+import autoTable from "jspdf-autotable"
 
 const BACKEND = "https://tourify-4cuu.onrender.com"
 
@@ -28,18 +28,27 @@ export default function MyBookingsPage() {
         }
         setUser(JSON.parse(storedUser))
 
-        fetch(`${BACKEND}/api/bookings/my`, {
-            headers: { "Authorization": `Bearer ${storedToken}` }
-        })
-            .then(res => res.json())
-            .then(data => {
-                setBookings(Array.isArray(data) ? data : [])
-                setLoading(false)
+        const fetchBookings = () => {
+            fetch(`${BACKEND}/api/bookings/my`, {
+                headers: { "Authorization": `Bearer ${storedToken}` }
             })
-            .catch(err => {
-                console.error("Fetch error:", err)
-                setLoading(false)
-            })
+                .then(res => res.json())
+                .then(data => {
+                    setBookings(Array.isArray(data) ? data : [])
+                    setLoading(false)
+                })
+                .catch(err => {
+                    console.error("Fetch error:", err)
+                    setLoading(false)
+                })
+        }
+
+        // Initial fetch
+        fetchBookings()
+
+        // Polling for live updates every 10 seconds
+        const interval = setInterval(fetchBookings, 10000)
+        return () => clearInterval(interval)
     }, [router])
 
     const handleDownloadPDF = (booking: any) => {
@@ -86,14 +95,14 @@ export default function MyBookingsPage() {
             ["Status", (booking.status || "Pending").toUpperCase()],
         ]
 
-            ; (doc as any).autoTable({
-                startY: 65,
-                head: [],
-                body: summaryData,
-                theme: 'plain',
-                styles: { fontSize: 10, cellPadding: 2 },
-                columnStyles: { 0: { fontStyle: 'bold', width: 40 } }
-            })
+        autoTable(doc, {
+            startY: 65,
+            head: [],
+            body: summaryData,
+            theme: 'plain',
+            styles: { fontSize: 10, cellPadding: 2 },
+            columnStyles: { 0: { fontStyle: 'bold', cellWidth: 40 } }
+        })
 
         // Cost Breakdown
         const finalY = (doc as any).lastAutoTable.finalY + 15
@@ -108,14 +117,14 @@ export default function MyBookingsPage() {
             ["TOTAL AMOUNT PAID", `INR ${totalBill.toLocaleString()}`],
         ]
 
-            ; (doc as any).autoTable({
-                startY: finalY + 5,
-                head: [['Description', 'Amount']],
-                body: costData,
-                theme: 'striped',
-                headStyles: { fillColor: primaryColor },
-                styles: { fontSize: 10 }
-            })
+        autoTable(doc, {
+            startY: finalY + 5,
+            head: [['Description', 'Amount']],
+            body: costData,
+            theme: 'striped',
+            headStyles: { fillColor: primaryColor as [number, number, number] },
+            styles: { fontSize: 10 }
+        })
 
         // Footer Note
         const bottomY = (doc as any).lastAutoTable.finalY + 20
