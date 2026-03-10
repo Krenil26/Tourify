@@ -20,6 +20,7 @@ export default function BookingPage() {
     const [user, setUser] = useState<any>(null)
     const [token, setToken] = useState<string>("")
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [paymentState, setPaymentState] = useState<"idle" | "processing" | "success">("idle")
     const [submitted, setSubmitted] = useState(false)
     const [bookingId, setBookingId] = useState<string>("")
     const [loading, setLoading] = useState(true)
@@ -71,7 +72,13 @@ export default function BookingPage() {
     }, [router])
 
     const handleConfirmBooking = async () => {
+        setPaymentState("processing")
         setIsSubmitting(true)
+
+        // Mock Payment Gateway processing time
+        await new Promise(resolve => setTimeout(resolve, 2500))
+        setPaymentState("success")
+
         try {
             const response = await fetch(`${BACKEND}/api/bookings`, {
                 method: "POST",
@@ -236,17 +243,22 @@ export default function BookingPage() {
                                     <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-6 flex gap-3">
                                         <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                                         <p className="text-[11px] text-amber-500/80 leading-relaxed font-medium">
-                                            This booking requires admin approval. Once approved, you will receive a notification to complete the payment.
+                                            You will be charged securely via our gateway now. This booking requires admin approval. If rejected, your payment will be fully refunded within 3-5 business days.
                                         </p>
                                     </div>
 
                                     <Button
-                                        className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/25 group transition-all"
-                                        disabled={isSubmitting}
+                                        className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold shadow-lg shadow-emerald-500/25 group transition-all relative overflow-hidden"
+                                        disabled={isSubmitting || paymentState !== "idle"}
                                         onClick={handleConfirmBooking}
                                     >
-                                        {isSubmitting ? "Processing..." : "Confirm Booking Request"}
-                                        <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                                        <span className="relative z-10 flex items-center justify-center">
+                                            {paymentState === "processing" ? "Processing Secure Payment..." : isSubmitting ? "Creating Request..." : "Pay ₹" + (totalBill).toLocaleString() + " & Request Booking"}
+                                            {paymentState === "idle" && !isSubmitting && <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />}
+                                        </span>
+                                        {paymentState === "processing" && (
+                                            <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                                        )}
                                     </Button>
                                 </div>
 
@@ -294,10 +306,10 @@ export default function BookingPage() {
 
                             <p className="text-xs text-white/40 leading-relaxed px-4">
                                 {bookingData.status === 'approved'
-                                    ? "Your itinerary has been approved! You can now proceed with the payment to secure your trail."
+                                    ? "Your itinerary has been approved and payment is verified! Check your email for trail details."
                                     : bookingData.status === 'rejected'
-                                        ? "Unfortunately, your request couldn't be approved at this time. Please contact support."
-                                        : "Our curators are reviewing your itinerary to ensure it meets our sustainability standards. You'll be notified via email once approved."}
+                                        ? "Unfortunately, your request couldn't be approved at this time. A refund has been automatically initiated and will reflect in 3-5 days."
+                                        : "Payment successful! Our curators are now reviewing your itinerary to ensure it meets our sustainability standards. You'll be notified via email once approved."}
                             </p>
                         </div>
 
