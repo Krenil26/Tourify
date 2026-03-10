@@ -20,6 +20,7 @@ export default function LoginPage() {
         email: "",
         password: ""
     })
+    const [errorMsg, setErrorMsg] = useState("")
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.id]: e.target.value })
@@ -28,6 +29,7 @@ export default function LoginPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
+        setErrorMsg("")
 
         try {
             const data = await api.auth.login(formData)
@@ -47,10 +49,12 @@ export default function LoginPage() {
             // Redirect to home so they can see their profile in the navbar
             router.push("/")
         } catch (error: any) {
+            const msg = error.message || "Invalid email or password."
+            setErrorMsg(msg)
             toast({
                 variant: "destructive",
                 title: "Login failed",
-                description: error.message || "Invalid email or password.",
+                description: msg,
             })
         } finally {
             setIsLoading(false)
@@ -140,6 +144,15 @@ export default function LoginPage() {
                                     />
                                 </div>
                             </div>
+                            {errorMsg && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium px-4 py-3 rounded-xl text-center"
+                                >
+                                    {errorMsg}
+                                </motion.div>
+                            )}
                         </CardContent>
                         <CardFooter className="flex flex-col space-y-6 pb-8 px-8">
                             <Button
