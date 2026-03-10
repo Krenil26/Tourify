@@ -8,7 +8,7 @@ const testimonials = [
     role: "Eco-Traveler",
     avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&q=80",
     content:
-      "Tourify's AI found me the most serene forest cabins. It's like the app knows exactly where my soul needs to rest.",
+      "Tourifyy's AI found me the most serene forest cabins. It's like the app knows exactly where my soul needs to rest.",
     rating: 5,
     gradient: "from-emerald-500 to-teal-400",
   },

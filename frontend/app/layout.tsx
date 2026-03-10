@@ -8,7 +8,7 @@ import "./globals.css"
 const outfit = Outfit({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Tourify - AI-Powered Travel Planning",
+  title: "Tourifyy - AI-Powered Travel Planning",
   description:
     "Plan your dream trip with AI. Get personalized itineraries based on your budget, preferences, and travel style.",
   generator: "v0.app",
