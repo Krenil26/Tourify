@@ -145,7 +145,7 @@ export function AIDemoSection() {
                     <Compass className="w-8 h-8 text-white animate-spin-slow" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground text-xl tracking-tight">Tourify Spirit</h3>
+                    <h3 className="font-bold text-foreground text-xl tracking-tight">Tourifyy Spirit</h3>
                     <div className="flex items-center gap-2 mt-0.5">
                       <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
                       <span className="text-[10px] text-emerald-500 font-extrabold uppercase tracking-widest">Harmony Found</span>

@@ -194,8 +194,15 @@ export default function BookingPage() {
                                                     {day.day}
                                                 </div>
                                                 <div>
-                                                    <div className="text-sm font-bold text-white mb-1">{day.title}</div>
-                                                    <div className="text-xs text-white/40">{day.activities.length} activities planned</div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <div className="text-sm font-bold text-white uppercase tracking-tight">{day.title}</div>
+                                                        {day.date && (
+                                                            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-md font-medium border border-emerald-500/10">
+                                                                {day.date}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-xs text-white/40">{day.activities?.length || 0} activities planned</div>
                                                 </div>
                                             </div>
                                         ))}

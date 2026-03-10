@@ -22,19 +22,19 @@ const seed = async () => {
         const users = [
             {
                 name: 'Admin User',
-                email: 'admin@tourify.com',
+                email: 'admin@tourifyy.com',
                 password: hashedPassword,
                 role: 'admin'
             },
             {
                 name: 'Test Customer',
-                email: 'customer@tourify.com',
+                email: 'customer@tourifyy.com',
                 password: hashedPassword,
                 role: 'customer'
             }
         ];
         await User.insertMany(users);
-        console.log('✅ Users seeded: admin@tourify.com / password123');
+        console.log('✅ Users seeded: admin@tourifyy.com / password123');
 
         // 2. Seed Destinations (Sample)
         await Destination.deleteMany();
@@ -71,7 +71,7 @@ const seed = async () => {
         // 3. Seed Notifications
         await Notification.deleteMany();
         await Notification.create([
-            { title: 'Welcome to Tourify', message: 'Explore the world mindfully.', type: 'info' },
+            { title: 'Welcome to Tourifyy', message: 'Explore the world mindfully.', type: 'info' },
             { title: 'Nature Alert', message: 'High wind in Kyoto trails.', type: 'alert' }
         ]);
         console.log('✅ Notifications seeded');

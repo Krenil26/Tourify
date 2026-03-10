@@ -3,7 +3,7 @@ import { Footer } from "@/components/footer"
 import { GlobalSanctuaryExplorer } from "@/components/global-sanctuary-explorer"
 
 export const metadata = {
-    title: "Global Sanctuary | Tourify.ai — 5,000+ Protected Parks & Retreats",
+    title: "Global Sanctuary | Tourifyy — 5,000+ Protected Parks & Retreats",
     description: "Explore our global network of eco-certified protected parks, nature retreats, and sanctuaries across every continent.",
 }
 

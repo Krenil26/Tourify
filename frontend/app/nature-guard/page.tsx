@@ -3,8 +3,8 @@ import { Footer } from "@/components/footer"
 import { NatureGuardDashboard } from "@/components/nature-guard-dashboard"
 
 export const metadata = {
-    title: "Nature Guard | Tourify.ai — Real-Time Ecosystem & Weather Monitor",
-    description: "Monitor live weather conditions and ecosystem health for your travel destinations with Tourify's Nature Guard system.",
+    title: "Nature Guard | Tourifyy — Real-Time Ecosystem & Weather Monitor",
+    description: "Monitor live weather conditions and ecosystem health for your travel destinations with Tourifyy's Nature Guard system.",
 }
 
 export default function NatureGuardPage() {

@@ -25,7 +25,7 @@ router.post("/", authenticate, async (req, res) => {
         const bookingData = {
             userId: req.user.id,
             userName: userName || req.user.name || "Explorer",
-            userEmail: userEmail || req.user.email || "unknown@tourify.ai",
+            userEmail: userEmail || req.user.email || "unknown@tourifyy.com",
             destination,
             travelers,
             budget,

@@ -110,7 +110,7 @@ export default function LoginPage() {
                                     <Input
                                         id="email"
                                         type="email"
-                                        placeholder="explorer@tourify.ai"
+                                        placeholder="explorer@tourifyy.com"
                                         required
                                         className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl focus:border-emerald-500/50 focus:ring-emerald-500/20 transition-all"
                                         value={formData.email}

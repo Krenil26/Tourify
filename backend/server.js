@@ -38,7 +38,7 @@ app.use(express.json());
 // 2. Health Check / Root (Moved to top)
 app.get('/', (req, res) => {
   console.log('✅ Health check hit at root /');
-  res.send('Tourify API is ONLINE. v1.0.2');
+  res.send('Tourifyy API is ONLINE. v1.0.2');
 });
 
 // 3. Detailed Request Logging
@@ -65,7 +65,7 @@ app.use('/api/bookings', bookingRoutes);
 // 5. Catch-all for debugging 404s
 app.use((req, res) => {
   console.log(`❌ MY-APP-404: ${req.method} ${req.url}`);
-  res.status(404).send(`Tourify Backend (v1.0.3) says: The route ${req.url} was not found on this server.`);
+  res.status(404).send(`Tourifyy Backend (v1.0.3) says: The route ${req.url} was not found on this server.`);
 });
 
 app.listen(PORT, '0.0.0.0', () => {

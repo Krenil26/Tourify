@@ -35,7 +35,7 @@ export default function SignupPage() {
             await api.auth.register(formData)
 
             toast({
-                title: "Welcome to Tourify!",
+                title: "Welcome to Tourifyy!",
                 description: "Account created successfully. Redirecting...",
             })
 
@@ -117,7 +117,7 @@ export default function SignupPage() {
                                     <Input
                                         id="email"
                                         type="email"
-                                        placeholder="explorer@tourify.ai"
+                                        placeholder="explorer@tourifyy.com"
                                         required
                                         className="pl-12 h-12 bg-white/5 border-white/10 rounded-xl focus:border-emerald-500/50 focus:ring-emerald-500/20 transition-all"
                                         value={formData.email}
@@ -166,7 +166,7 @@ export default function SignupPage() {
 
                             <div className="flex items-center gap-2 text-[10px] text-muted-foreground/40 font-medium px-4 bg-white/5 py-3 rounded-xl border border-white/5">
                                 <ShieldCheck className="w-4 h-4 text-emerald-500/50" />
-                                <span>Secured by Tourify Protected Auth</span>
+                                <span>Secured by Tourifyy Protected Auth</span>
                             </div>
 
                             <div className="text-center text-sm text-muted-foreground">

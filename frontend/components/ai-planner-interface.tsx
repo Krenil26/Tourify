@@ -119,10 +119,22 @@ export function AIPlannerInterface() {
 
   const generateTrip = async () => {
     setIsGenerating(true)
+
+    // Calculate dynamic days based on dates
+    let diffDays = 3
+    if (dates.start && dates.end) {
+      const start = new Date(dates.start)
+      const end = new Date(dates.end)
+      const diffTime = Math.abs(end.getTime() - start.getTime())
+      diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+    }
+    // Safety cap: min 1 day, max 14 days
+    diffDays = Math.min(Math.max(diffDays, 1), 14)
+
     setMessages([
       {
         role: "ai",
-        content: `Analyzing ${destination || "your destination"}... Connecting with local spirits and checking available trails.`,
+        content: `Analyzing ${destination || "your destination"}... Connecting with local spirits and checking available trails for a ${diffDays}-day journey.`,
       },
     ])
 
@@ -133,42 +145,61 @@ export function AIPlannerInterface() {
     const accommodation = activeDestinationData?.accommodations?.[0]?.name || "Luxury Eco Lodge"
     const rental = activeDestinationData?.rentals?.[0]?.name || "Eco-Friendly SUV"
 
-    const generatedItinerary = [
-      {
-        day: 1,
-        title: `Welcome to ${destination}`,
-        activities: [
+    const generatedItinerary = []
+    for (let i = 1; i <= diffDays; i++) {
+      const currentDate = dates.start ? new Date(dates.start) : new Date()
+      if (dates.start) currentDate.setDate(currentDate.getDate() + (i - 1))
+      const dateStr = dates.start
+        ? currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : ""
+
+      let title = ""
+      let activities = []
+
+      if (i === 1) {
+        title = `Welcome & Arrival`
+        activities = [
           { time: "11:00 AM", activity: `Arrival & VIP Transfer to ${accommodation}`, icon: Plane, cost: 50 },
           { time: "2:00 PM", activity: `Nature Walk & First Exploration`, icon: Camera, cost: 0 },
           { time: "7:00 PM", activity: `Local Welcome Dinner`, icon: Utensils, cost: 40 },
-        ],
-      },
-      {
-        day: 2,
-        title: "Immersive Experiences",
-        activities: [
-          { time: "9:00 AM", activity: `Morning Nature Trail with ${rental}`, icon: Tent, cost: 25 },
-          { time: "2:00 PM", activity: `Hidden Gem Discovery`, icon: MapPin, cost: 15 },
-          { time: "8:00 PM", activity: `Star Gazing Session`, icon: Sparkles, cost: 10 },
-        ],
-      },
-      {
-        day: 3,
-        title: "Final Trails & Departure",
-        activities: [
+        ]
+      } else if (i === diffDays && diffDays > 1) {
+        title = "Final Trails & Departure"
+        activities = [
           { time: "10:00 AM", activity: `Morning Souvenir Trail`, icon: ShoppingBag, cost: 30 },
           { time: "1:00 PM", activity: `Farewell Brunch`, icon: Utensils, cost: 35 },
           { time: "4:00 PM", activity: `Transfer to Airport`, icon: Plane, cost: 40 },
-        ],
-      },
-    ]
+        ]
+      } else {
+        const middleThemes = [
+          { title: "Nature Immersion", activity: "Guided Ecological Trail", icon: Tent },
+          { title: "Cultural Discovery", activity: "Traditional Village Visit", icon: Building },
+          { title: "Adventure Exploration", activity: "Off-Road Trail Expedition", icon: Mountain },
+          { title: "Mindfulness Session", activity: "Spiritual Retreat Experience", icon: Sparkles },
+        ]
+        const theme = middleThemes[(i - 2) % middleThemes.length]
+        title = theme.title
+        activities = [
+          { time: "9:00 AM", activity: theme.activity, icon: theme.icon, cost: 25 },
+          { time: "2:00 PM", activity: `Hidden Gem Photography`, icon: Camera, cost: 0 },
+          { time: "8:00 PM", activity: `Evening Culture Show & Dinner`, icon: Utensils, cost: 45 },
+        ]
+      }
+
+      generatedItinerary.push({
+        day: i,
+        date: dateStr,
+        title,
+        activities
+      })
+    }
 
     setCustomItinerary(generatedItinerary)
     setMessages((prev) => [
       ...prev,
       {
         role: "ai",
-        content: `I've crafted a unique 3-day itinerary for ${destination}! I've included ${accommodation} and suggested using ${rental} for your local travels to stay eco-friendly and stylish.`,
+        content: `I've crafted a unique ${diffDays}-day itinerary for ${destination}! I've included ${accommodation} and suggested using ${rental} for your local travels to stay eco-friendly and stylish.`,
       },
     ])
 
@@ -528,7 +559,7 @@ export function AIPlannerInterface() {
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      3 Days • {travelers} Travelers • ₹{budget[0]} Budget
+                      {customItinerary.length} Days • {travelers} Travelers • ₹{budget[0]} Budget
                     </p>
                   </div>
                   <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
@@ -565,7 +596,10 @@ export function AIPlannerInterface() {
                           {day.day}
                         </div>
                         <div>
-                          <h4 className="font-semibold text-foreground">Day {day.day}</h4>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-foreground">Day {day.day}</h4>
+                            {day.date && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-md font-medium">{day.date}</span>}
+                          </div>
                           <p className="text-sm text-muted-foreground">{day.title}</p>
                         </div>
                       </div>

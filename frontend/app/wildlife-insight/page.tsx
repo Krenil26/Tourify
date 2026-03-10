@@ -3,7 +3,7 @@ import { Footer } from "@/components/footer"
 import { WildlifeInsightExplorer } from "@/components/wildlife-insight-explorer"
 
 export const metadata = {
-    title: "Wildlife Insight | Tourify.ai — Flora & Fauna AI Identifier",
+    title: "Wildlife Insight | Tourifyy — Flora & Fauna AI Identifier",
     description: "Identify flora and fauna along your travel route. Explore our AI-powered wildlife encyclopedia with conservation status, sighting logs, and habitats.",
 }
 

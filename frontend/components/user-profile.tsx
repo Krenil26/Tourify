@@ -493,13 +493,13 @@ export function UserProfile() {
                   <div className="md:w-px bg-emerald-500/10" />
                   <div className="flex-1 flex flex-col justify-end gap-3">
                     <p className="text-xs text-muted-foreground mb-4 leading-relaxed italic">
-                      "Your data is protected by Tourify's Earth Guardian protocol, ensuring your travel footprint is private and secure."
+                      "Your data is protected by Tourifyy's Earth Guardian protocol, ensuring your travel footprint is private and secure."
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       <Link href="/login" className="flex-1">
                         <Button variant="outline" className="w-full text-foreground hover:bg-foreground/5 font-bold rounded-xl h-11 px-6 text-[10px] uppercase tracking-widest border border-border">
                           <LogOut className="w-4 h-4 mr-2" />
-                          Log Out of Tourify
+                          Log Out of Tourifyy
                         </Button>
                       </Link>
                       <Button variant="ghost" className="text-destructive hover:bg-destructive/10 hover:text-destructive font-bold rounded-xl h-11 px-6 text-[10px] uppercase tracking-widest border border-destructive/10">

@@ -32,7 +32,7 @@ if (!admin.apps.length) {
     } else {
         console.warn('⚠️  Firebase: Initializing in fallback mode due to missing credentials.');
         app = admin.initializeApp({
-            projectId: projectId || 'tourify-app'
+            projectId: projectId || 'Tourifyy-app'
         });
     }
 } else {

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: tourify-backend
+    name: Tourifyy-backend
     env: node
     rootDir: backend
     buildCommand: npm install

@@ -12,12 +12,7 @@ export function DestinationsPreview() {
   useEffect(() => {
     const fetchDestinations = async () => {
       try {
-        const res = await fetch("https://tourify-4cuu.onrender.com/api/world/destinations")
-        if (!res.ok) {
-          console.error("Destinations API error:", res.status)
-          setDestinations([])
-          return
-        }
+        const res = await fetch("http://localhost:5000/api/world/destinations")
         const data = await res.json()
         // Randomly pick top 4 for preview
         if (Array.isArray(data)) {

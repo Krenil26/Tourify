@@ -73,36 +73,82 @@ export function FeaturesSection() {
           </p>
         </div>
 
-        <div className="bento-grid">
+        <div className="flex flex-col md:flex-row gap-4 h-full md:h-[600px] min-h-[500px]">
           {features.map((feature, index) => (
-            <Link key={index} href={feature.link || "/planner"} className={feature.className}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="group relative overflow-hidden rounded-[2.5rem] p-8 transition-all duration-500 hover:shadow-2xl hover:shadow-emerald-500/10 bg-white/5 backdrop-blur-md border border-foreground/5 shadow-sm h-full"
-              >
-                {/* Gradient Overlay */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-700`} />
-
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="mb-6 w-14 h-14 rounded-2xl bg-foreground/5 flex items-center justify-center group-hover:bg-foreground/10 transition-colors">
-                    {(() => {
-                      const Icon = IconMap[feature.iconName] || Leaf
-                      return <Icon className="w-7 h-7 text-emerald-500" />
-                    })()}
-                  </div>
-                  <h3 className="text-2xl font-bold mb-3 text-foreground group-hover:translate-x-1 transition-transform duration-500">{feature.title}</h3>
-                  <p className="text-foreground/60 text-base leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </motion.div>
-            </Link>
+            <FeatureCard key={index} feature={feature} index={index} />
           ))}
         </div>
       </div>
     </section>
+  )
+}
+
+function FeatureCard({ feature, index }: { feature: any; index: number }) {
+  const [isHovered, setIsHovered] = useState(false)
+  const Icon = IconMap[feature.iconName] || Leaf
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.1, duration: 0.5 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="relative flex-grow h-full"
+      style={{ flexBasis: "0%" }}
+      animate={{
+        flexGrow: isHovered ? 4 : 1,
+      }}
+    >
+      <Link href={feature.link || "/planner"} className="block h-full">
+        <div className={`relative h-full overflow-hidden rounded-[2.5rem] p-8 transition-all duration-700 bg-white/5 backdrop-blur-md border border-foreground/5 shadow-2xl group`}>
+          {/* Animated Background Gradient */}
+          <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-20 group-hover:opacity-100 transition-opacity duration-700`} />
+          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-40 transition-opacity duration-700" />
+
+          <div className="relative z-10 flex flex-col h-full justify-between">
+            <div>
+              <motion.div
+                animate={{
+                  scale: isHovered ? 1.2 : 1,
+                  rotate: isHovered ? 12 : 0,
+                  backgroundColor: isHovered ? "rgba(16, 185, 129, 0.2)" : "rgba(255, 255, 255, 0.05)"
+                }}
+                className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8 transition-colors"
+              >
+                <Icon className="w-8 h-8 text-emerald-400" />
+              </motion.div>
+
+              <h3 className={`text-2xl md:text-3xl font-bold mb-4 text-white transition-all duration-500 ${!isHovered ? "md:[writing-mode:vertical-lr] md:rotate-180" : ""}`}>
+                {feature.title}
+              </h3>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{
+                opacity: isHovered ? 1 : 0,
+                y: isHovered ? 0 : 20,
+                display: isHovered ? "block" : "none"
+              }}
+              transition={{ duration: 0.4 }}
+              className="mt-auto"
+            >
+              <p className="text-white/80 text-lg leading-relaxed mb-6 max-w-md">
+                {feature.description}
+              </p>
+              <div className="flex items-center gap-2 text-emerald-400 font-bold uppercase tracking-widest text-xs">
+                <span>Explore Nature</span>
+                <Compass className="w-4 h-4 animate-spin-slow" />
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Shine Effect */}
+          <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent to-white/10 opacity-40 group-hover:animate-shine" />
+        </div>
+      </Link>
+    </motion.div>
   )
 }

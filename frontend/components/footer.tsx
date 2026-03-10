@@ -42,7 +42,7 @@ export function Footer() {
               <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center group-hover:rotate-12 transition-transform">
                 <Leaf className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-foreground">Tourify<span className="text-emerald-500">.ai</span></span>
+              <span className="text-xl font-bold text-foreground">Tourify<span className="text-emerald-500">y</span></span>
             </Link>
             <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
               Plan your next sanctuary escape with AI. Sustainable travel for the conscious explorer.
@@ -106,7 +106,7 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-foreground/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">© 2026 Tourify AI. Harmony with nature.</p>
+          <p className="text-sm text-muted-foreground">© 2026 Tourifyy. Harmony with nature.</p>
           <div className="flex items-center gap-6">
             <Link href="/privacy" className="text-sm text-muted-foreground hover:text-emerald-500 transition-colors">
               Privacy
