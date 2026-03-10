@@ -50,4 +50,12 @@ export const api = {
         getAdminStats: () => fetchWithAuth("/user/admin/stats"),
         getCustomerStats: () => fetchWithAuth("/user/customer/stats"),
     },
+    trips: {
+        createTrip: (tripData: any) => fetchWithAuth("/trips", { method: "POST", body: JSON.stringify(tripData) }),
+        payTrip: (tripId: string) => fetchWithAuth(`/trips/${tripId}/pay`, { method: "PUT" }),
+        approveTrip: (tripId: string) => fetchWithAuth(`/trips/${tripId}/approve`, { method: "PUT" }),
+        rejectTrip: (tripId: string) => fetchWithAuth(`/trips/${tripId}/reject`, { method: "PUT" }),
+        getUserTrips: () => fetchWithAuth("/trips/user"),
+        getAdminTrips: () => fetchWithAuth("/trips/admin"),
+    },
 };
