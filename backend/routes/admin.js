@@ -94,4 +94,67 @@ router.put('/users/:id/role', authMiddleware, adminMiddleware, async (req, res) 
     }
 });
 
+// @route   GET api/admin/destinations
+// @desc    Get all destinations for admin
+// @access  Private/Admin
+router.get('/destinations', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const snapshot = await db.collection('destinations').get();
+        const destinations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.json(destinations);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route   POST api/admin/destinations
+// @desc    Add a new destination
+// @access  Private/Admin
+router.post('/destinations', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { name, country, image, price, category, description, rating, tags, bestTime } = req.body;
+        if (!name || !country || !price || !category) {
+            return res.status(400).json({ msg: 'Name, country, price and category are required' });
+        }
+        const destination = {
+            name,
+            country,
+            image: image || '',
+            price: Number(price),
+            category,
+            description: description || '',
+            rating: Number(rating) || 4.5,
+            reviews: 0,
+            tags: tags || [],
+            bestTime: bestTime || '',
+            natureFocus: true,
+            createdAt: new Date().toISOString(),
+        };
+        const docRef = await db.collection('destinations').add(destination);
+        res.status(201).json({ id: docRef.id, ...destination });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route   DELETE api/admin/destinations/:id
+// @desc    Delete a destination
+// @access  Private/Admin
+router.delete('/destinations/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const ref = db.collection('destinations').doc(req.params.id);
+        const doc = await ref.get();
+        if (!doc.exists) {
+            return res.status(404).json({ msg: 'Destination not found' });
+        }
+        await ref.delete();
+        res.json({ msg: 'Destination removed' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 module.exports = router;
