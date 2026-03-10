@@ -11,6 +11,8 @@ import {
     ShieldCheck, AlertCircle, ChevronRight, Download, Share2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import jsPDF from "jspdf"
+import "jspdf-autotable"
 
 const BACKEND = "https://tourify-4cuu.onrender.com"
 
@@ -131,6 +133,109 @@ export default function BookingPage() {
         { label: "Activities", value: Math.round(totalBill * 0.15) },
         { label: "Food & Others", value: Math.round(totalBill * 0.15) },
     ]
+
+    const handleDownloadPDF = () => {
+        const doc = new jsPDF()
+
+        // Brand colors
+        const brandColor = [16, 185, 129] // Emerald 500
+
+        // Header Section
+        doc.setFillColor(brandColor[0], brandColor[1], brandColor[2])
+        doc.rect(0, 0, 210, 40, 'F')
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(24)
+        doc.setFont('helvetica', 'bold')
+        doc.text("Tourifyy", 14, 25)
+
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.text("Booking Invoice & Trip Outline", 14, 32)
+
+        doc.setFontSize(10)
+        doc.text(`Date: ${new Date().toLocaleDateString()}`, 196, 25, { align: 'right' })
+        doc.text(`Booking ID: ${bookingId || "TF-X" + Math.floor(Math.random() * 10000)}`, 196, 32, { align: 'right' })
+
+        // Customer Details
+        doc.setTextColor(60, 60, 60)
+        doc.setFontSize(12)
+        doc.setFont('helvetica', 'bold')
+        doc.text("Billed To:", 14, 55)
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.text(`Name: ${user?.name || "Customer"}`, 14, 62)
+        doc.text(`Email: ${user?.email || "N/A"}`, 14, 68)
+
+        // Trip Summary
+        doc.setFontSize(12)
+        doc.setFont('helvetica', 'bold')
+        doc.text("Trip Summary:", 120, 55)
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.text(`Destination: ${bookingData.destination}`, 120, 62)
+        doc.text(`Dates: ${bookingData.startDate || 'TBD'} to ${bookingData.endDate || 'TBD'}`, 120, 68)
+        doc.text(`Travelers: ${bookingData.travelers} Persons`, 120, 74)
+        doc.text(`Status: ${bookingData.status || "Pending"}`, 120, 80)
+
+        // Pricing Breakdown Table
+        doc.setFontSize(14)
+        doc.setFont('helvetica', 'bold')
+        doc.text("Cost Breakdown", 14, 100)
+
+        const tableColumn = ["Description", "Amount (INR)"]
+        const tableRows = breakdown.map(item => [item.label, `Rs. ${item.value.toLocaleString()}`])
+        // @ts-ignore
+        doc.autoTable({
+            startY: 105,
+            head: [tableColumn],
+            body: tableRows,
+            theme: 'striped',
+            headStyles: { fillColor: brandColor, halign: 'left' },
+            bodyStyles: { halign: 'left' },
+            alternateRowStyles: { fillColor: [245, 250, 248] },
+            margin: { left: 14 }
+        })
+
+        // @ts-ignore
+        const finalY = doc.lastAutoTable.finalY || 150
+
+        // Total
+        doc.setFontSize(12)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`Total Paid: Rs. ${totalBill.toLocaleString()}`, 196, finalY + 10, { align: 'right' })
+
+        // Itinerary (if available)
+        if (bookingData.itinerary && bookingData.itinerary.length > 0) {
+            doc.setFontSize(14)
+            doc.setFont('helvetica', 'bold')
+            doc.text("Planned Itinerary", 14, finalY + 30)
+
+            const itinColumns = ["Day", "Title", "Date"]
+            const itinRows = bookingData.itinerary.map((day: any) => [
+                day.day,
+                day.title,
+                day.date || "TBD"
+            ])
+            // @ts-ignore
+            doc.autoTable({
+                startY: finalY + 35,
+                head: [itinColumns],
+                body: itinRows,
+                theme: 'plain',
+                headStyles: { fillColor: [240, 240, 240], textColor: [40, 40, 40] }
+            })
+        }
+
+        // Footer
+        doc.setFontSize(10)
+        doc.setTextColor(150, 150, 150)
+        // @ts-ignore
+        const pageHeight = doc.internal.pageSize.getHeight()
+        doc.text("Thank you for choosing Tourifyy for your ecological travel.", 105, pageHeight - 15, { align: 'center' })
+
+        // Save
+        doc.save(`Tourifyy_Invoice_${bookingId || "Ticket"}.pdf`)
+    }
 
     return (
         <main className="min-h-screen bg-background text-foreground overflow-hidden px-4 sm:px-6 lg:px-8">
@@ -317,8 +422,12 @@ export default function BookingPage() {
                             <Button variant="outline" className="rounded-xl px-8 h-12" onClick={() => router.push("/customer-dashboard")}>
                                 Go to Dashboard
                             </Button>
-                            <Button className="rounded-xl px-8 h-12 bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20">
-                                <Share2 className="w-4 h-4 mr-2" /> Share Trip
+                            <Button
+                                onClick={handleDownloadPDF}
+                                className="rounded-xl px-8 h-12 bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20"
+                            >
+                                <Download className="w-4 h-4 mr-2" />
+                                Download Invoice PDF
                             </Button>
                         </div>
                     </motion.div>
