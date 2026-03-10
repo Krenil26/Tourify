@@ -156,34 +156,54 @@ export function AIPlannerInterface() {
       let title = ""
       let activities = []
 
+      const dest = destination || "your destination"
+
       if (i === 1) {
-        title = `Welcome & Arrival`
+        title = `Arrival in ${dest}`
         activities = [
-          { time: "11:00 AM", activity: `Arrival & VIP Transfer to ${accommodation}`, icon: Plane, cost: 50 },
-          { time: "2:00 PM", activity: `Nature Walk & First Exploration`, icon: Camera, cost: 0 },
-          { time: "7:00 PM", activity: `Local Welcome Dinner`, icon: Utensils, cost: 40 },
+          { time: "10:00 AM", activity: `Arrive at ${dest} Airport / Station`, icon: Plane, cost: 50 },
+          { time: "12:00 PM", activity: `Check-in at ${accommodation}`, icon: Hotel, cost: 0 },
+          { time: "2:00 PM", activity: `Explore nearby landmarks of ${dest}`, icon: Camera, cost: 0 },
+          { time: "7:00 PM", activity: `Welcome dinner – Local cuisine of ${dest}`, icon: Utensils, cost: 40 },
         ]
       } else if (i === diffDays && diffDays > 1) {
-        title = "Final Trails & Departure"
+        title = `Farewell & Departure from ${dest}`
         activities = [
-          { time: "10:00 AM", activity: `Morning Souvenir Trail`, icon: ShoppingBag, cost: 30 },
-          { time: "1:00 PM", activity: `Farewell Brunch`, icon: Utensils, cost: 35 },
-          { time: "4:00 PM", activity: `Transfer to Airport`, icon: Plane, cost: 40 },
+          { time: "9:00 AM", activity: `Last morning walk around ${dest}`, icon: Camera, cost: 0 },
+          { time: "11:00 AM", activity: `Souvenir shopping at local market`, icon: ShoppingBag, cost: 30 },
+          { time: "1:00 PM", activity: `Farewell brunch`, icon: Utensils, cost: 35 },
+          { time: "4:00 PM", activity: `Transfer to ${dest} Airport / Station – Departure`, icon: Plane, cost: 40 },
         ]
       } else {
         const middleThemes = [
-          { title: "Nature Immersion", activity: "Guided Ecological Trail", icon: Tent },
-          { title: "Cultural Discovery", activity: "Traditional Village Visit", icon: Building },
-          { title: "Adventure Exploration", activity: "Off-Road Trail Expedition", icon: Mountain },
-          { title: "Mindfulness Session", activity: "Spiritual Retreat Experience", icon: Sparkles },
+          { title: `Nature & Scenic Spots in ${dest}`, activities: [
+            { time: "8:00 AM", activity: `Guided nature trail & scenic viewpoints`, icon: Tent, cost: 25 },
+            { time: "12:00 PM", activity: `Lunch at a popular local restaurant`, icon: Utensils, cost: 30 },
+            { time: "2:00 PM", activity: `Visit parks, gardens & natural attractions`, icon: Camera, cost: 15 },
+            { time: "7:00 PM", activity: `Sunset point & dinner`, icon: Utensils, cost: 40 },
+          ]},
+          { title: `Cultural Heritage of ${dest}`, activities: [
+            { time: "9:00 AM", activity: `Visit historical monuments & temples`, icon: Building, cost: 20 },
+            { time: "12:00 PM", activity: `Traditional lunch experience`, icon: Utensils, cost: 25 },
+            { time: "2:00 PM", activity: `Museum & art gallery tour`, icon: Camera, cost: 15 },
+            { time: "7:00 PM", activity: `Cultural show & local dinner`, icon: Utensils, cost: 45 },
+          ]},
+          { title: `Adventure Day in ${dest}`, activities: [
+            { time: "7:00 AM", activity: `Trekking / off-road adventure activity`, icon: Mountain, cost: 50 },
+            { time: "12:00 PM", activity: `Picnic lunch at adventure site`, icon: Utensils, cost: 20 },
+            { time: "3:00 PM", activity: `Water sports / zip-lining / cycling`, icon: Sparkles, cost: 40 },
+            { time: "8:00 PM", activity: `Campfire dinner & stargazing`, icon: Utensils, cost: 35 },
+          ]},
+          { title: `Relaxation & Local Life in ${dest}`, activities: [
+            { time: "10:00 AM", activity: `Spa & wellness retreat`, icon: Sparkles, cost: 60 },
+            { time: "1:00 PM", activity: `Farm-to-table lunch experience`, icon: Utensils, cost: 30 },
+            { time: "3:00 PM", activity: `Local village walk & interaction`, icon: Building, cost: 0 },
+            { time: "7:00 PM", activity: `Rooftop dinner with city views`, icon: Utensils, cost: 50 },
+          ]},
         ]
         const theme = middleThemes[(i - 2) % middleThemes.length]
         title = theme.title
-        activities = [
-          { time: "9:00 AM", activity: theme.activity, icon: theme.icon, cost: 25 },
-          { time: "2:00 PM", activity: `Hidden Gem Photography`, icon: Camera, cost: 0 },
-          { time: "8:00 PM", activity: `Evening Culture Show & Dinner`, icon: Utensils, cost: 45 },
-        ]
+        activities = theme.activities
       }
 
       generatedItinerary.push({

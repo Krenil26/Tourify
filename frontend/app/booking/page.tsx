@@ -204,25 +204,49 @@ export default function BookingPage() {
         doc.setFont('helvetica', 'bold')
         doc.text(`Total Paid: Rs. ${totalBill.toLocaleString()}`, 196, finalY + 10, { align: 'right' })
 
-        // Itinerary (if available)
+        // Detailed Day-wise Itinerary
         if (bookingData.itinerary && bookingData.itinerary.length > 0) {
             doc.setFontSize(14)
             doc.setFont('helvetica', 'bold')
-            doc.text("Planned Itinerary", 14, finalY + 30)
+            doc.text("Detailed Day-wise Itinerary", 14, finalY + 30)
 
-            const itinColumns = ["Day", "Title", "Date"]
-            const itinRows = bookingData.itinerary.map((day: any) => [
-                day.day,
-                day.title,
-                day.date || "TBD"
-            ])
+            const itinColumns = ["Time", "Activity / Place", "Cost (INR)"]
+            const itinRows: any[] = []
+
+            bookingData.itinerary.forEach((day: any) => {
+                // Day header row
+                itinRows.push([
+                    { content: `Day ${day.day}: ${day.title}${day.date ? '  —  ' + day.date : ''}`, colSpan: 3, styles: { fillColor: brandColor, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 10, halign: 'left' } }
+                ])
+                // Activity rows
+                if (day.activities && day.activities.length > 0) {
+                    day.activities.forEach((act: any) => {
+                        itinRows.push([
+                            act.time || "",
+                            act.activity || "",
+                            act.cost ? `Rs. ${act.cost}` : "Free"
+                        ])
+                    })
+                } else {
+                    itinRows.push(["", "Explore & enjoy the destination", "—"])
+                }
+            })
+
             // @ts-ignore
             doc.autoTable({
                 startY: finalY + 35,
                 head: [itinColumns],
                 body: itinRows,
-                theme: 'plain',
-                headStyles: { fillColor: [240, 240, 240], textColor: [40, 40, 40] }
+                theme: 'striped',
+                headStyles: { fillColor: [40, 40, 40], textColor: [255, 255, 255], fontStyle: 'bold' },
+                bodyStyles: { fontSize: 9 },
+                alternateRowStyles: { fillColor: [245, 250, 248] },
+                margin: { left: 14 },
+                columnStyles: {
+                    0: { cellWidth: 30 },
+                    1: { cellWidth: 'auto' },
+                    2: { cellWidth: 30, halign: 'right' }
+                }
             })
         }
 
