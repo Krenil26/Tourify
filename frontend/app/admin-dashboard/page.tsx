@@ -9,7 +9,7 @@ import {
     Map, Globe, Bird, LogOut, Menu, TrendingUp, TrendingDown,
     Settings, Bell, Search, Trash2, Edit, ChevronRight, Leaf,
     Activity, Server, Database, Zap, UserPlus, Compass,
-    Filter, Eye, MoreVertical, Info, X, RefreshCw, MapPin
+    Filter, Eye, MoreVertical, Info, X, RefreshCw, MapPin, Plus, Image, DollarSign, Tag
 } from "lucide-react"
 
 const BACKEND = "https://tourify-4cuu.onrender.com"
@@ -36,6 +36,13 @@ export default function AdminDashboard() {
     const [notifications, setNotifications] = useState<any[]>([])
     const [bookings, setBookings] = useState<any[]>([])
     const [showNotif, setShowNotif] = useState(false)
+
+    // Destinations management
+    const [destinations, setDestinations] = useState<any[]>([])
+    const [loadingDest, setLoadingDest] = useState(true)
+    const [showAddPlace, setShowAddPlace] = useState(false)
+    const [newPlace, setNewPlace] = useState({ name: "", country: "", price: "", category: "Nature", image: "", description: "", bestTime: "" })
+    const [addingPlace, setAddingPlace] = useState(false)
 
     // Loading states
     const [loadingStats, setLoadingStats] = useState(true)
@@ -94,6 +101,18 @@ export default function AdminDashboard() {
             .catch(() => setBookings([]))
     }, [token])
 
+    // Fetch destinations
+    useEffect(() => {
+        if (!token) return
+        setLoadingDest(true)
+        fetch(`${BACKEND}/api/admin/destinations`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(r => r.json())
+            .then(d => { setDestinations(Array.isArray(d) ? d : []); setLoadingDest(false) })
+            .catch(() => setLoadingDest(false))
+    }, [token])
+
     // Fetch notifications
     useEffect(() => {
         fetch(`${BACKEND}/api/notifications`)
@@ -128,6 +147,48 @@ export default function AdminDashboard() {
             setUsers(prev => prev.map(u => u._id === id ? { ...u, role: updated.role } : u))
         } catch {
             alert("Failed to update role")
+        }
+    }
+
+    // Add destination
+    const handleAddPlace = async () => {
+        if (!newPlace.name || !newPlace.country || !newPlace.price || !newPlace.category) {
+            alert("Name, country, price and category are required")
+            return
+        }
+        setAddingPlace(true)
+        try {
+            const res = await fetch(`${BACKEND}/api/admin/destinations`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ ...newPlace, price: Number(newPlace.price) })
+            })
+            const created = await res.json()
+            if (res.ok) {
+                setDestinations(prev => [created, ...prev])
+                setNewPlace({ name: "", country: "", price: "", category: "Nature", image: "", description: "", bestTime: "" })
+                setShowAddPlace(false)
+            } else {
+                alert(created.msg || "Failed to add destination")
+            }
+        } catch {
+            alert("Failed to add destination")
+        } finally {
+            setAddingPlace(false)
+        }
+    }
+
+    // Delete destination
+    const handleDeletePlace = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this destination?")) return
+        try {
+            await fetch(`${BACKEND}/api/admin/destinations/${id}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            setDestinations(prev => prev.filter(d => d.id !== id))
+        } catch {
+            alert("Failed to delete destination")
         }
     }
 
@@ -309,6 +370,130 @@ export default function AdminDashboard() {
                                 <div className="text-[10px] text-white/25 mt-1">{stat.sub}</div>
                             </motion.div>
                         ))}
+                    </motion.div>
+
+                    {/* Destinations Management */}
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                        className="rounded-2xl border border-white/5 overflow-hidden"
+                        style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.01) 100%)" }}>
+                        <div className="flex items-center justify-between p-5 border-b border-white/5">
+                            <h2 className="font-bold text-white text-sm flex items-center gap-2">
+                                <MapPin className="w-4 h-4 text-emerald-400" /> Manage Destinations
+                                <span className="text-[10px] text-white/30 font-normal ml-1">({destinations.length} places)</span>
+                            </h2>
+                            <button onClick={() => setShowAddPlace(!showAddPlace)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium hover:bg-emerald-500/20 transition-all">
+                                <Plus className="w-3 h-3" /> Add Place
+                            </button>
+                        </div>
+
+                        {/* Add Place Form */}
+                        <AnimatePresence>
+                            {showAddPlace && (
+                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                                    className="border-b border-white/5 overflow-hidden">
+                                    <div className="p-5 space-y-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Name *</label>
+                                                <input value={newPlace.name} onChange={e => setNewPlace({ ...newPlace, name: e.target.value })}
+                                                    placeholder="e.g. Bali Rainforest" className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Country *</label>
+                                                <input value={newPlace.country} onChange={e => setNewPlace({ ...newPlace, country: e.target.value })}
+                                                    placeholder="e.g. Indonesia" className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Price (₹) *</label>
+                                                <input type="number" value={newPlace.price} onChange={e => setNewPlace({ ...newPlace, price: e.target.value })}
+                                                    placeholder="e.g. 1500" className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Category *</label>
+                                                <select value={newPlace.category} onChange={e => setNewPlace({ ...newPlace, category: e.target.value })}
+                                                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white outline-none focus:border-emerald-500/50">
+                                                    <option value="Nature">Nature</option>
+                                                    <option value="Beach">Beach</option>
+                                                    <option value="City">City</option>
+                                                    <option value="Mountain">Mountain</option>
+                                                    <option value="Desert">Desert</option>
+                                                    <option value="Cultural">Cultural</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Image URL</label>
+                                                <input value={newPlace.image} onChange={e => setNewPlace({ ...newPlace, image: e.target.value })}
+                                                    placeholder="https://..." className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50" />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Best Time</label>
+                                                <input value={newPlace.bestTime} onChange={e => setNewPlace({ ...newPlace, bestTime: e.target.value })}
+                                                    placeholder="e.g. Jun - Sep" className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50" />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Description</label>
+                                            <textarea value={newPlace.description} onChange={e => setNewPlace({ ...newPlace, description: e.target.value })}
+                                                placeholder="A short description of the destination..." rows={2}
+                                                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50 resize-none" />
+                                        </div>
+                                        <div className="flex items-center gap-3 pt-1">
+                                            <button onClick={handleAddPlace} disabled={addingPlace}
+                                                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 transition-all disabled:opacity-50">
+                                                {addingPlace ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                                                {addingPlace ? "Adding..." : "Add Destination"}
+                                            </button>
+                                            <button onClick={() => setShowAddPlace(false)}
+                                                className="px-4 py-2 rounded-lg bg-white/5 text-white/50 text-xs font-medium hover:bg-white/10 transition-all">
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Destinations List */}
+                        {loadingDest ? (
+                            <div className="p-8 flex flex-col items-center gap-3">
+                                <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                <p className="text-xs text-white/30">Loading destinations...</p>
+                            </div>
+                        ) : destinations.length === 0 ? (
+                            <div className="p-8 text-center text-sm text-white/30">No destinations found. Add your first place!</div>
+                        ) : (
+                            <div className="divide-y divide-white/5">
+                                {destinations.map((d, i) => (
+                                    <motion.div key={d.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.03 * i }}
+                                        className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors group">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 shrink-0">
+                                                {d.image ? (
+                                                    <img src={d.image} alt={d.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center"><Image className="w-5 h-5 text-white/20" /></div>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-semibold text-white">{d.name}</div>
+                                                <div className="text-xs text-white/40 flex items-center gap-2">
+                                                    <span>{d.country}</span>
+                                                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                                                    <span>{d.category}</span>
+                                                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                                                    <span>₹{d.price?.toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => handleDeletePlace(d.id)}
+                                            className="p-2 rounded-lg hover:bg-red-500/10 text-white/30 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100" title="Delete">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
                     </motion.div>
 
                     {/* Users Table — real data */}
