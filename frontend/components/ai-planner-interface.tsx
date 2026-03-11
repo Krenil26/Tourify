@@ -83,7 +83,7 @@ export function AIPlannerInterface() {
   const [destination, setDestination] = useState("")
   const [dates, setDates] = useState({ start: "", end: "" })
   const [travelers, setTravelers] = useState(2)
-  const [budget, setBudget] = useState([2000])
+  const [budget, setBudget] = useState([25000])
   const [selectedStyles, setSelectedStyles] = useState<string[]>([])
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState("")
@@ -414,15 +414,15 @@ export function AIPlannerInterface() {
                     <Slider
                       value={budget}
                       onValueChange={setBudget}
-                      max={10000}
-                      min={500}
-                      step={100}
+                      max={500000}
+                      min={25000}
+                      step={5000}
                       className="w-full"
                     />
                     <div className="flex justify-between mt-2">
-                      <span className="text-sm text-muted-foreground">₹5,000</span>
-                      <span className="text-lg font-bold text-primary">₹{budget[0]}</span>
-                      <span className="text-sm text-muted-foreground">₹1,00,000</span>
+                      <span className="text-sm text-muted-foreground">₹25,000</span>
+                      <span className="text-lg font-bold text-primary">₹{budget[0].toLocaleString('en-IN')}</span>
+                      <span className="text-sm text-muted-foreground">₹5,00,000</span>
                     </div>
                   </div>
                 </div>
