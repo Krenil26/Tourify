@@ -29,6 +29,7 @@ import {
   Music,
   ShoppingBag,
 } from "lucide-react"
+import { PlacesAutocomplete } from "@/components/places-autocomplete"
 
 const travelStyles = [
   { id: "adventure", label: "Adventure", icon: Mountain },
@@ -316,12 +317,13 @@ export function AIPlannerInterface() {
                 <h2 className="text-xl font-semibold text-foreground mb-6">Where do you want to go?</h2>
 
                 <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    placeholder="Enter destination (e.g., Delhi, India)"
-                    className="pl-12 h-14 bg-secondary border-0 text-foreground placeholder:text-muted-foreground rounded-xl"
+                  <PlacesAutocomplete
                     value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
+                    onChange={(val) => {
+                      setDestination(val)
+                      fetchDestinationData(val)
+                    }}
+                    placeholder="Enter destination (e.g., Delhi, India)"
                   />
                 </div>
 

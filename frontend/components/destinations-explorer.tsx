@@ -21,6 +21,19 @@ const RealMapView = dynamic(() => import("./real-map-view"), {
   )
 })
 
+// Dynamically import Google Maps view
+const GoogleMapView = dynamic(() => import("./google-map-view"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full aspect-[2/1] bg-emerald-950/20 rounded-[2rem] flex items-center justify-center border border-emerald-500/10">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-muted-foreground text-sm font-medium">Loading Google Maps...</p>
+      </div>
+    </div>
+  )
+})
+
 // Static data removed, now fetching from backend
 
 const categories = ["All", "Beach", "City", "Romantic", "Luxury", "Adventure", "Culture"]
@@ -37,6 +50,7 @@ export function DestinationsExplorer() {
   const [favorites, setFavorites] = useState<string[]>([])
   const [sortBy, setSortBy] = useState("popular")
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid")
+  const [mapProvider, setMapProvider] = useState<"leaflet" | "google">("google")
 
   useEffect(() => {
     const fetchData = async () => {
@@ -263,7 +277,28 @@ export function DestinationsExplorer() {
         {/* View Content */}
         {viewMode === "map" ? (
           <div className="mb-12">
-            <RealMapView destinations={sortedItems} />
+            {/* Map Provider Toggle */}
+            <div className="flex justify-end mb-4">
+              <div className="flex bg-secondary p-1 rounded-xl border border-border">
+                <button
+                  onClick={() => setMapProvider("google")}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${mapProvider === "google" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  🌍 Google Maps
+                </button>
+                <button
+                  onClick={() => setMapProvider("leaflet")}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${mapProvider === "leaflet" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  🗺️ Leaflet
+                </button>
+              </div>
+            </div>
+            {mapProvider === "google" ? (
+              <GoogleMapView destinations={sortedItems} />
+            ) : (
+              <RealMapView destinations={sortedItems} />
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
