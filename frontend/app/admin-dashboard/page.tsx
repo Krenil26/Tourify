@@ -552,6 +552,20 @@ export default function AdminDashboard() {
                                                     <span className="w-1 h-1 rounded-full bg-white/20" />
                                                     <span>₹{d.price?.toLocaleString()}</span>
                                                 </div>
+                                                {d.createdBy && (
+                                                    <div className="text-[10px] text-white/30 flex items-center gap-1.5 mt-1">
+                                                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[9px]">
+                                                            {d.createdBy.name?.charAt(0).toUpperCase()}
+                                                        </span>
+                                                        <span>Added by {d.createdBy.name}</span>
+                                                        {d.createdAt && (
+                                                            <>
+                                                                <span className="w-1 h-1 rounded-full bg-white/20" />
+                                                                <span>{new Date(d.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                         <button onClick={() => handleDeletePlace(d.id)}

@@ -156,6 +156,8 @@ router.post('/destinations', authMiddleware, adminMiddleware, async (req, res) =
         if (!name || !country || !price || !category) {
             return res.status(400).json({ msg: 'Name, country, price and category are required' });
         }
+        const adminDoc = await db.collection('users').doc(req.user.id).get();
+        const adminData = adminDoc.exists ? adminDoc.data() : {};
         const destination = {
             name,
             country,
@@ -169,6 +171,11 @@ router.post('/destinations', authMiddleware, adminMiddleware, async (req, res) =
             bestTime: bestTime || '',
             natureFocus: true,
             createdAt: new Date().toISOString(),
+            createdBy: {
+                id: req.user.id,
+                name: adminData.name || 'Admin',
+                email: adminData.email || '',
+            },
         };
         const docRef = await db.collection('destinations').add(destination);
         res.status(201).json({ id: docRef.id, ...destination });
