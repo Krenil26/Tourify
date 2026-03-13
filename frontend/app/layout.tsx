@@ -4,6 +4,7 @@ import { Outfit } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
+import Script from "next/script"
 
 const outfit = Outfit({ subsets: ["latin"] })
 
@@ -31,6 +32,12 @@ export default function RootLayout({
         {children}
         <Toaster />
         <Analytics />
+        {/* Service Worker registration for Offline Survival Mode */}
+        <Script id="sw-register" strategy="afterInteractive">
+          {`if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+          }`}
+        </Script>
       </body>
     </html>
   )

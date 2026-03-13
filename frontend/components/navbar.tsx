@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Leaf, Compass, Map, User, Bell, Info, CheckCircle, AlertTriangle, LogOut, Shield, Globe, Users, Bird } from "lucide-react"
+import { Menu, X, Leaf, Compass, Map, User, Bell, Info, CheckCircle, AlertTriangle, LogOut, Shield, Globe, Users, Bird, Radio } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 export function Navbar() {
@@ -86,6 +86,7 @@ export function Navbar() {
             <NavLink href="/global-sanctuary" icon={Globe} label="Sanctuary" />
             <NavLink href="/tribal-sync" icon={Users} label="Tribe" />
             <NavLink href="/wildlife-insight" icon={Bird} label="Wildlife" />
+            <NavLink href="/offline-survival" icon={Radio} label="Survival" />
           </div>
 
           <div className="hidden md:flex items-center gap-4">
@@ -211,6 +212,7 @@ export function Navbar() {
                 <MobileLink href="/global-sanctuary" icon={Globe} label="Global Sanctuary" onClick={() => setIsOpen(false)} />
                 <MobileLink href="/tribal-sync" icon={Users} label="Tribal Sync" onClick={() => setIsOpen(false)} />
                 <MobileLink href="/wildlife-insight" icon={Bird} label="Wildlife Insight" onClick={() => setIsOpen(false)} />
+                <MobileLink href="/offline-survival" icon={Radio} label="Offline Survival" onClick={() => setIsOpen(false)} />
 
                 <div className="pt-6 mt-4 border-t border-foreground/5 px-4 space-y-3">
                   {loggedInUser ? (

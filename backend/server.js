@@ -18,6 +18,7 @@ const wildlifeRoutes = require('./routes/wildlife');
 const adminRoutes = require('./routes/admin');
 const customerRoutes = require('./routes/customer');
 const bookingRoutes = require('./routes/booking');
+const offlineRoutes = require('./routes/offline');
 
 const app = express();
 const PORT = process.env.PORT || 10000; // Render expects port 10000 or the PORT env var
@@ -61,6 +62,7 @@ app.use('/api/wildlife', wildlifeRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/customer', customerRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/offline', offlineRoutes);
 
 // 5. Catch-all for debugging 404s
 app.use((req, res) => {
