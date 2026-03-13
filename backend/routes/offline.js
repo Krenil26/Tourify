@@ -407,17 +407,36 @@ function getPhraseBook(languages) {
     return result;
 }
 
+function buildDefaultOfflineSetting() {
+    return {
+        enabled: true,
+        isPublic: true,
+        packVersion: '1.2.0',
+        packSizeMB: null,
+    };
+}
+
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
 // @route  GET /api/offline/destinations
 // @desc   Get all destinations with offline pack metadata
 router.get('/destinations', async (req, res) => {
     try {
-        const snapshot = await db.collection('destinations').get();
+        const [snapshot, settingsSnapshot] = await Promise.all([
+            db.collection('destinations').get(),
+            db.collection('offline_pack_settings').get(),
+        ]);
+
+        const settingsMap = {};
+        settingsSnapshot.docs.forEach((doc) => {
+            settingsMap[doc.id] = doc.data();
+        });
+
         const destinations = snapshot.docs.map(doc => {
             const data = doc.data();
+            const setting = { ...buildDefaultOfflineSetting(), ...(settingsMap[doc.id] || {}) };
             const seed = Math.abs((data.coordinates?.lat || 20) + (data.coordinates?.lng || 70));
-            const packSizeMB = Math.round(80 + (seed % 120));
+            const defaultPackSizeMB = Math.round(80 + (seed % 120));
             const languages = getLanguagesForCountry(data.country);
             return {
                 id: doc.id,
@@ -426,15 +445,20 @@ router.get('/destinations', async (req, res) => {
                 category: data.category,
                 image: data.image,
                 coordinates: data.coordinates,
-                packSizeMB,
-                packVersion: '1.2.0',
+                packSizeMB: Number(setting.packSizeMB) || defaultPackSizeMB,
+                packVersion: setting.packVersion || '1.2.0',
                 languages,
                 trailCount: Math.round(3 + (seed % 8)),
                 speciesCount: Math.round(50 + (seed % 200)),
                 emergencyContactsCount: getEmergencyContacts(data.country).length,
                 firstAidGuideCount: getFirstAidGuides(data.category).length,
+                access: {
+                    enabled: setting.enabled !== false,
+                    isPublic: setting.isPublic !== false,
+                },
             };
-        });
+        }).filter((dest) => dest.access.enabled && dest.access.isPublic);
+
         res.json(destinations);
     } catch (err) {
         console.error(err.message);
@@ -447,13 +471,22 @@ router.get('/destinations', async (req, res) => {
 router.get('/pack/:destinationId', async (req, res) => {
     try {
         const { destinationId } = req.params;
-        const doc = await db.collection('destinations').doc(destinationId).get();
+        const [doc, settingDoc] = await Promise.all([
+            db.collection('destinations').doc(destinationId).get(),
+            db.collection('offline_pack_settings').doc(destinationId).get(),
+        ]);
 
         if (!doc.exists) {
             return res.status(404).json({ msg: 'Destination not found' });
         }
 
         const dest = { id: doc.id, ...doc.data() };
+        const setting = { ...buildDefaultOfflineSetting(), ...(settingDoc.exists ? settingDoc.data() : {}) };
+
+        if (setting.enabled === false || setting.isPublic === false) {
+            return res.status(403).json({ msg: 'Offline pack access is restricted for this destination' });
+        }
+
         const languages = getLanguagesForCountry(dest.country);
 
         const pack = {
@@ -462,7 +495,7 @@ router.get('/pack/:destinationId', async (req, res) => {
             country: dest.country,
             category: dest.category,
             coordinates: dest.coordinates,
-            packVersion: '1.2.0',
+            packVersion: setting.packVersion || '1.2.0',
             generatedAt: new Date().toISOString(),
             emergencyContacts: getEmergencyContacts(dest.country),
             firstAid: getFirstAidGuides(dest.category),

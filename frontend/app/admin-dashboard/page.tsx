@@ -9,13 +9,15 @@ import {
     Map, Globe, Bird, LogOut, Menu, TrendingUp, TrendingDown,
     Settings, Bell, Search, Trash2, Edit, ChevronRight, Leaf,
     Activity, Server, Database, Zap, UserPlus, Compass,
-    Filter, Eye, MoreVertical, Info, X, RefreshCw, MapPin, Plus, Image, DollarSign, Tag
+    Filter, Eye, MoreVertical, Info, X, RefreshCw, MapPin, Plus, Image, DollarSign, Tag,
+    Radio, Lock, Unlock, Download
 } from "lucide-react"
 
 const BACKEND = "https://tourify-4cuu.onrender.com"
 
 const sidebarLinks = [
     { href: "/admin-dashboard", icon: LayoutDashboard, label: "Overview" },
+    { href: "/admin-dashboard#offline-control", icon: Radio, label: "Offline Survival" },
     { href: "/destinations", icon: Map, label: "Destinations" },
     { href: "/nature-guard", icon: Shield, label: "Nature Guard" },
     { href: "/global-sanctuary", icon: Globe, label: "Sanctuary" },
@@ -43,6 +45,12 @@ export default function AdminDashboard() {
     const [showAddPlace, setShowAddPlace] = useState(false)
     const [newPlace, setNewPlace] = useState({ name: "", country: "", price: "", category: "Nature", image: "", description: "", bestTime: "" })
     const [addingPlace, setAddingPlace] = useState(false)
+
+    // Offline survival management
+    const [offlinePacks, setOfflinePacks] = useState<any[]>([])
+    const [offlineSummary, setOfflineSummary] = useState<any>(null)
+    const [loadingOffline, setLoadingOffline] = useState(true)
+    const [updatingOfflineId, setUpdatingOfflineId] = useState<string>("")
 
     // Loading states
     const [loadingStats, setLoadingStats] = useState(true)
@@ -120,6 +128,26 @@ export default function AdminDashboard() {
             .then(d => setNotifications(Array.isArray(d) ? d : []))
             .catch(() => setNotifications([]))
     }, [])
+
+    // Fetch offline survival packs for admin control
+    useEffect(() => {
+        if (!token) return
+        setLoadingOffline(true)
+        fetch(`${BACKEND}/api/admin/offline-packs`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(r => r.json())
+            .then(d => {
+                setOfflinePacks(Array.isArray(d?.packs) ? d.packs : [])
+                setOfflineSummary(d?.summary || null)
+                setLoadingOffline(false)
+            })
+            .catch(() => {
+                setOfflinePacks([])
+                setOfflineSummary(null)
+                setLoadingOffline(false)
+            })
+    }, [token])
 
     // Delete user
     const handleDeleteUser = async (id: string) => {
@@ -206,6 +234,46 @@ export default function AdminDashboard() {
         }
     }
 
+    const handleOfflineUpdate = async (packId: string, payload: any) => {
+        try {
+            setUpdatingOfflineId(packId)
+            const res = await fetch(`${BACKEND}/api/admin/offline-packs/${packId}`, {
+                method: "PUT",
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            if (!res.ok) throw new Error("Update failed")
+            const updated = await res.json()
+
+            setOfflinePacks(prev => prev.map(p => p.id === packId ? {
+                ...p,
+                enabled: updated.enabled ?? p.enabled,
+                isPublic: updated.isPublic ?? p.isPublic,
+                packSizeMB: updated.packSizeMB ?? p.packSizeMB,
+                packVersion: updated.packVersion ?? p.packVersion,
+                updatedAt: updated.updatedAt ?? p.updatedAt,
+                updatedBy: updated.updatedBy ?? p.updatedBy,
+            } : p))
+
+            // Keep summary in sync instantly
+            setOfflineSummary((prev: any) => {
+                if (!prev) return prev
+                const nextPacks = offlinePacks.map(p => p.id === packId ? { ...p, ...payload } : p)
+                return {
+                    ...prev,
+                    enabled: nextPacks.filter(p => p.enabled !== false).length,
+                    publicCount: nextPacks.filter(p => p.isPublic !== false).length,
+                    disabled: nextPacks.filter(p => p.enabled === false).length,
+                    privateCount: nextPacks.filter(p => p.isPublic === false).length,
+                }
+            })
+        } catch {
+            alert("Failed to update offline pack settings")
+        } finally {
+            setUpdatingOfflineId("")
+        }
+    }
+
     const filteredUsers = users.filter(u =>
         u.name?.toLowerCase().includes(search.toLowerCase()) ||
         u.email?.toLowerCase().includes(search.toLowerCase())
@@ -232,7 +300,7 @@ export default function AdminDashboard() {
                     >
                         <div className="p-6 border-b border-white/5">
                             <Link href="/" className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                                <div className="w-10 h-10 rounded-xl bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
                                     <Leaf className="w-5 h-5 text-white" />
                                 </div>
                                 <div>
@@ -254,7 +322,7 @@ export default function AdminDashboard() {
 
                         <div className="p-4 border-t border-white/5">
                             <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
-                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm">
+                                <div className="w-9 h-9 rounded-full bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm">
                                     {user.name?.charAt(0) || "A"}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -327,7 +395,7 @@ export default function AdminDashboard() {
                             className="p-2 rounded-xl bg-white/5 border border-white/5 text-white/60 hover:text-white transition-all">
                             <RefreshCw className="w-4 h-4" />
                         </button>
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold">
+                        <div className="w-8 h-8 rounded-full bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold">
                             {user.name?.charAt(0) || "A"}
                         </div>
                     </div>
@@ -466,7 +534,7 @@ export default function AdminDashboard() {
                             <div className="divide-y divide-white/5">
                                 {destinations.map((d, i) => (
                                     <motion.div key={d.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.03 * i }}
-                                        className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors group">
+                                        className="flex items-center justify-between p-4 hover:bg-white/2 transition-colors group">
                                         <div className="flex items-center gap-4">
                                             <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 shrink-0">
                                                 {d.image ? (
@@ -490,6 +558,163 @@ export default function AdminDashboard() {
                                             className="p-2 rounded-lg hover:bg-red-500/10 text-white/30 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100" title="Delete">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+                    </motion.div>
+
+                    {/* Offline Survival Access Control */}
+                    <motion.div
+                        id="offline-control"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.18 }}
+                        className="rounded-2xl border border-white/5 overflow-hidden"
+                        style={{ background: "linear-gradient(135deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.01) 100%)" }}
+                    >
+                        <div className="p-5 border-b border-white/5">
+                            <div className="flex items-center justify-between gap-3">
+                                <h2 className="font-bold text-white text-sm flex items-center gap-2">
+                                    <Radio className="w-4 h-4 text-amber-400" /> Offline Survival Control Center
+                                </h2>
+                                <a
+                                    href="/offline-survival"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[11px] px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 hover:bg-amber-500/20 transition-all"
+                                >
+                                    Open User Page
+                                </a>
+                            </div>
+
+                            <p className="text-xs text-white/40 mt-2">
+                                Admin can view all packs, disable a destination pack, and switch between Public and Private access.
+                            </p>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                                <div className="rounded-xl border border-white/5 p-3 bg-white/2">
+                                    <div className="text-[10px] text-white/35 uppercase tracking-wider">Total Packs</div>
+                                    <div className="text-lg font-bold text-white mt-0.5">{offlineSummary?.total ?? offlinePacks.length}</div>
+                                </div>
+                                <div className="rounded-xl border border-emerald-500/20 p-3 bg-emerald-500/10">
+                                    <div className="text-[10px] text-emerald-300 uppercase tracking-wider">Enabled</div>
+                                    <div className="text-lg font-bold text-emerald-300 mt-0.5">{offlineSummary?.enabled ?? 0}</div>
+                                </div>
+                                <div className="rounded-xl border border-red-500/20 p-3 bg-red-500/10">
+                                    <div className="text-[10px] text-red-300 uppercase tracking-wider">Disabled</div>
+                                    <div className="text-lg font-bold text-red-300 mt-0.5">{offlineSummary?.disabled ?? 0}</div>
+                                </div>
+                                <div className="rounded-xl border border-blue-500/20 p-3 bg-blue-500/10">
+                                    <div className="text-[10px] text-blue-300 uppercase tracking-wider">Private</div>
+                                    <div className="text-lg font-bold text-blue-300 mt-0.5">{offlineSummary?.privateCount ?? 0}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {loadingOffline ? (
+                            <div className="p-8 flex flex-col items-center gap-3">
+                                <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                                <p className="text-xs text-white/30">Loading offline packs...</p>
+                            </div>
+                        ) : offlinePacks.length === 0 ? (
+                            <div className="p-8 text-center text-sm text-white/30">No offline packs available yet.</div>
+                        ) : (
+                            <div className="divide-y divide-white/5">
+                                {offlinePacks.map((pack, i) => (
+                                    <motion.div
+                                        key={pack.id}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.02 * i }}
+                                        className="p-4 hover:bg-white/2 transition-colors"
+                                    >
+                                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                                            <div>
+                                                <div className="text-sm font-semibold text-white flex items-center gap-2">
+                                                    {pack.name}
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/40">
+                                                        {pack.country}
+                                                    </span>
+                                                </div>
+                                                <div className="text-[11px] text-white/40 mt-1 flex flex-wrap gap-2">
+                                                    <span>{pack.category}</span>
+                                                    <span>•</span>
+                                                    <span className="flex items-center gap-1"><Download className="w-3 h-3" />{pack.packSizeMB} MB</span>
+                                                    <span>•</span>
+                                                    <span>v{pack.packVersion}</span>
+                                                    <span>•</span>
+                                                    <span>{pack.languagesCount} languages</span>
+                                                    <span>•</span>
+                                                    <span>{pack.firstAidGuideCount} first-aid guides</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <button
+                                                    onClick={() => handleOfflineUpdate(pack.id, { enabled: !pack.enabled })}
+                                                    disabled={updatingOfflineId === pack.id}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${pack.enabled
+                                                        ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/20 hover:bg-emerald-500/20"
+                                                        : "bg-red-500/10 text-red-300 border-red-500/20 hover:bg-red-500/20"}`}
+                                                >
+                                                    {pack.enabled ? "Enabled" : "Disabled"}
+                                                </button>
+
+                                                <button
+                                                    onClick={() => handleOfflineUpdate(pack.id, { isPublic: !pack.isPublic })}
+                                                    disabled={updatingOfflineId === pack.id}
+                                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${pack.isPublic
+                                                        ? "bg-blue-500/10 text-blue-300 border-blue-500/20 hover:bg-blue-500/20"
+                                                        : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"}`}
+                                                >
+                                                    {pack.isPublic ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+                                                    {pack.isPublic ? "Public" : "Private"}
+                                                </button>
+
+                                                <input
+                                                    value={pack.packVersion}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value
+                                                        setOfflinePacks(prev => prev.map(p => p.id === pack.id ? { ...p, packVersion: value } : p))
+                                                    }}
+                                                    className="w-20 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-white outline-none"
+                                                    placeholder="v1.2.0"
+                                                />
+                                                <button
+                                                    onClick={() => handleOfflineUpdate(pack.id, { packVersion: pack.packVersion })}
+                                                    disabled={updatingOfflineId === pack.id}
+                                                    className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-white/70 hover:bg-white/10"
+                                                >
+                                                    Save Ver
+                                                </button>
+
+                                                <input
+                                                    type="number"
+                                                    min={20}
+                                                    max={500}
+                                                    value={pack.packSizeMB}
+                                                    onChange={(e) => {
+                                                        const value = Number(e.target.value || 0)
+                                                        setOfflinePacks(prev => prev.map(p => p.id === pack.id ? { ...p, packSizeMB: value } : p))
+                                                    }}
+                                                    className="w-20 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-white outline-none"
+                                                />
+                                                <button
+                                                    onClick={() => handleOfflineUpdate(pack.id, { packSizeMB: pack.packSizeMB })}
+                                                    disabled={updatingOfflineId === pack.id}
+                                                    className="px-2.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-white/70 hover:bg-white/10"
+                                                >
+                                                    Save MB
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {(pack.updatedAt || pack.updatedBy) && (
+                                            <div className="text-[10px] text-white/30 mt-2">
+                                                Last updated: {pack.updatedAt ? new Date(pack.updatedAt).toLocaleString() : "—"} {pack.updatedBy ? `by ${pack.updatedBy}` : ""}
+                                            </div>
+                                        )}
                                     </motion.div>
                                 ))}
                             </div>
@@ -541,7 +766,7 @@ export default function AdminDashboard() {
                                                 className="hover:bg-white/3 transition-colors group">
                                                 <td className="px-5 py-4">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500/60 to-teal-600/60 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                                                        <div className="w-8 h-8 rounded-full bg-linear-to-br from-emerald-500/60 to-teal-600/60 flex items-center justify-center text-white text-xs font-bold shrink-0">
                                                             {u.name?.charAt(0)?.toUpperCase() || "?"}
                                                         </div>
                                                         <div>
