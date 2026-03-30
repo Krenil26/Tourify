@@ -120,8 +120,6 @@ export function AIPlannerInterface() {
     setSelectedStyles((prev) => (prev.includes(styleId) ? prev.filter((s) => s !== styleId) : [...prev, styleId]))
   }
 
-  const canContinueStep1 = Boolean(dates.start && dates.end)
-
   const continueFromStep1 = () => {
     if (!dates.start || !dates.end) {
       toast({
@@ -384,7 +382,6 @@ export function AIPlannerInterface() {
 
                 <Button
                   className="w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl text-base font-semibold glow-cyan"
-                  disabled={!canContinueStep1}
                   onClick={continueFromStep1}
                 >
                   Continue
