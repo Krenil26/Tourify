@@ -56,7 +56,7 @@ export function Navbar() {
     sessionStorage.removeItem("user")
     sessionStorage.removeItem("token")
     setLoggedInUser(null)
-    router.push("/login")
+    router.replace("/login")
   }
 
   // Redirect to correct dashboard based on role
