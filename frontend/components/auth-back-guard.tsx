@@ -21,6 +21,23 @@ function hasSessionAuth() {
   }
 }
 
+function getSessionRole(): string | null {
+  try {
+    const raw = sessionStorage.getItem("user")
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return typeof parsed?.role === "string" ? parsed.role : null
+  } catch {
+    return null
+  }
+}
+
+function shouldForceExpireSession() {
+  if (!hasSessionAuth()) return false
+  const role = getSessionRole()
+  return role !== "admin"
+}
+
 function isReloadNavigation() {
   try {
     const navEntries = performance.getEntriesByType?.("navigation")
@@ -60,6 +77,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }, [pathname, router])
 
   const expireSessionAndRedirect = useCallback(() => {
+    if (!shouldForceExpireSession()) return
+
     try {
       sessionStorage.removeItem("token")
       sessionStorage.removeItem("user")
@@ -87,7 +106,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   useLayoutEffect(() => {
     // If the user refreshes/reloads, force session expiry and show /login.
-    if (pathname && pathname !== "/login" && isReloadNavigation()) {
+    if (pathname && pathname !== "/login" && isReloadNavigation() && shouldForceExpireSession()) {
       expireSessionAndRedirect()
       return
     }
@@ -108,7 +127,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     }
 
     window.addEventListener("pageshow", onPageShow)
-    // Any browser Back/Forward navigation should immediately expire the session.
+    // Any browser Back/Forward navigation should immediately expire the session (customers only).
     // If we're already on /login, the login back-trap below will handle it.
     if (pathname !== "/login") {
       window.addEventListener("popstate", expireSessionAndRedirect)
