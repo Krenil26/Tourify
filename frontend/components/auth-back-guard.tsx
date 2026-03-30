@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 
 const PROTECTED_PREFIXES = ["/admin-dashboard", "/customer-dashboard", "/booking", "/my-bookings"]
@@ -9,38 +9,64 @@ function isProtectedPath(pathname: string) {
   return PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"))
 }
 
-export function AuthBackGuard() {
+function hasSessionAuth() {
+  try {
+    const token = sessionStorage.getItem("token")
+    const user = sessionStorage.getItem("user")
+    return Boolean(token && user)
+  } catch {
+    return false
+  }
+}
+
+export function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
 
-  useEffect(() => {
-    const checkAuth = () => {
-      if (!pathname || !isProtectedPath(pathname)) return
+  const protectedRoute = useMemo(() => {
+    return Boolean(pathname && isProtectedPath(pathname))
+  }, [pathname])
 
-      const token = sessionStorage.getItem("token")
-      const user = sessionStorage.getItem("user")
+  const [allowed, setAllowed] = useState(() => {
+    if (!pathname) return true
+    if (!isProtectedPath(pathname)) return true
+    return hasSessionAuth()
+  })
 
-      if (!token || !user) {
-        router.replace("/login")
-      }
+  const checkAuth = useCallback(() => {
+    if (!pathname || !isProtectedPath(pathname)) {
+      setAllowed(true)
+      return
     }
 
+    const ok = hasSessionAuth()
+    setAllowed(ok)
+    if (!ok) router.replace("/login")
+  }, [pathname, router])
+
+  useLayoutEffect(() => {
+    checkAuth()
+  }, [checkAuth])
+
+  useEffect(() => {
     const onPageShow = () => checkAuth()
     const onVisibility = () => {
       if (document.visibilityState === "visible") checkAuth()
     }
 
-    checkAuth()
     window.addEventListener("pageshow", onPageShow)
+    window.addEventListener("popstate", checkAuth)
     window.addEventListener("focus", checkAuth)
     document.addEventListener("visibilitychange", onVisibility)
 
     return () => {
       window.removeEventListener("pageshow", onPageShow)
+      window.removeEventListener("popstate", checkAuth)
       window.removeEventListener("focus", checkAuth)
       document.removeEventListener("visibilitychange", onVisibility)
     }
-  }, [pathname, router])
+  }, [checkAuth])
 
-  return null
+  if (protectedRoute && !allowed) return null
+  return <>{children}</>
 }

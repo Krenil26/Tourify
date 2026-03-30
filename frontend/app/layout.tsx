@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from "next"
 import { Outfit } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "@/components/ui/toaster"
-import { AuthBackGuard } from "@/components/auth-back-guard"
+import { AuthGate } from "@/components/auth-back-guard"
 import "./globals.css"
 import Script from "next/script"
 
@@ -30,8 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${outfit.className} antialiased aurora-bg min-h-screen text-foreground`}>
-        <AuthBackGuard />
-        {children}
+        <AuthGate>{children}</AuthGate>
         <Toaster />
         <Analytics />
         {/* Service Worker registration for Offline Survival Mode */}
