@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 
-const PROTECTED_PREFIXES = ["/admin-dashboard", "/customer-dashboard", "/booking", "/my-bookings"]
+const PUBLIC_PATHS = ["/", "/login", "/signup"]
 
-function isProtectedPath(pathname: string) {
-  return PROTECTED_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(prefix + "/"))
+function isPublicPath(pathname: string) {
+  if (pathname === "/") return true
+  if (pathname.startsWith("/api")) return true
+  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"))
 }
 
 function hasSessionAuth() {
@@ -24,17 +26,17 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
   const protectedRoute = useMemo(() => {
-    return Boolean(pathname && isProtectedPath(pathname))
+    return Boolean(pathname && !isPublicPath(pathname))
   }, [pathname])
 
   const [allowed, setAllowed] = useState(() => {
     if (!pathname) return true
-    if (!isProtectedPath(pathname)) return true
+    if (isPublicPath(pathname)) return true
     return hasSessionAuth()
   })
 
   const checkAuth = useCallback(() => {
-    if (!pathname || !isProtectedPath(pathname)) {
+    if (!pathname || isPublicPath(pathname)) {
       setAllowed(true)
       return
     }
