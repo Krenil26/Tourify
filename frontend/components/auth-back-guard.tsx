@@ -21,6 +21,19 @@ function hasSessionAuth() {
   }
 }
 
+function isReloadNavigation() {
+  try {
+    const navEntries = performance.getEntriesByType?.("navigation")
+    const nav = (navEntries && navEntries[0]) as PerformanceNavigationTiming | undefined
+    if (nav?.type) return nav.type === "reload"
+
+    // Legacy fallback
+    return (performance as any)?.navigation?.type === 1
+  } catch {
+    return false
+  }
+}
+
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -73,8 +86,13 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }, [pathname, router])
 
   useLayoutEffect(() => {
+    // If the user refreshes/reloads, force session expiry and show /login.
+    if (pathname && pathname !== "/login" && isReloadNavigation()) {
+      expireSessionAndRedirect()
+      return
+    }
     checkAuth()
-  }, [checkAuth])
+  }, [checkAuth, expireSessionAndRedirect, pathname])
 
   useEffect(() => {
     const onPageShow = (event: PageTransitionEvent) => {
