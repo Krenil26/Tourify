@@ -56,7 +56,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
     setAllowed(false)
     if (pathname !== "/login") {
-      router.replace("/login")
+      // Hard redirect is the most reliable way to ensure Back/Forward
+      // doesn't reveal previous pages (avoids SPA popstate edge-cases).
+      window.location.replace("/login")
+      return
     }
 
     // Best-effort: keep the user on /login by rewriting history.
@@ -88,13 +91,18 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
     window.addEventListener("pageshow", onPageShow)
     // Any browser Back/Forward navigation should immediately expire the session.
-    window.addEventListener("popstate", expireSessionAndRedirect)
+    // If we're already on /login, the login back-trap below will handle it.
+    if (pathname !== "/login") {
+      window.addEventListener("popstate", expireSessionAndRedirect)
+    }
     window.addEventListener("focus", checkAuth)
     document.addEventListener("visibilitychange", onVisibility)
 
     return () => {
       window.removeEventListener("pageshow", onPageShow)
-      window.removeEventListener("popstate", expireSessionAndRedirect)
+      if (pathname !== "/login") {
+        window.removeEventListener("popstate", expireSessionAndRedirect)
+      }
       window.removeEventListener("focus", checkAuth)
       document.removeEventListener("visibilitychange", onVisibility)
     }
