@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/hooks/use-toast"
 import {
   Sparkles,
   MapPin,
@@ -80,6 +81,7 @@ interface Message {
 
 export function AIPlannerInterface() {
   const router = useRouter()
+  const { toast } = useToast()
   const [step, setStep] = useState(1)
   const [destination, setDestination] = useState("")
   const [dates, setDates] = useState({ start: "", end: "" })
@@ -116,6 +118,21 @@ export function AIPlannerInterface() {
 
   const toggleStyle = (styleId: string) => {
     setSelectedStyles((prev) => (prev.includes(styleId) ? prev.filter((s) => s !== styleId) : [...prev, styleId]))
+  }
+
+  const canContinueStep1 = Boolean(dates.start && dates.end)
+
+  const continueFromStep1 = () => {
+    if (!dates.start || !dates.end) {
+      toast({
+        variant: "destructive",
+        title: "Please fill dates",
+        description: "Select both start and end dates to continue.",
+      })
+      return
+    }
+
+    setStep(2)
   }
 
   const generateTrip = async () => {
@@ -367,7 +384,8 @@ export function AIPlannerInterface() {
 
                 <Button
                   className="w-full h-14 bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl text-base font-semibold glow-cyan"
-                  onClick={() => setStep(2)}
+                  disabled={!canContinueStep1}
+                  onClick={continueFromStep1}
                 >
                   Continue
                   <ChevronRight className="w-5 h-5 ml-2" />
