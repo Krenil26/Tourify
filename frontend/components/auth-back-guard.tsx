@@ -55,7 +55,18 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     }
 
     setAllowed(false)
-    if (pathname !== "/login") router.replace("/login")
+    if (pathname !== "/login") {
+      router.replace("/login")
+    }
+
+    // Best-effort: keep the user on /login by rewriting history.
+    // This prevents the next Back click from revealing a previous page.
+    try {
+      window.history.replaceState(null, "", "/login")
+      window.history.pushState(null, "", "/login")
+    } catch {
+      // ignore
+    }
   }, [pathname, router])
 
   useLayoutEffect(() => {
@@ -88,6 +99,23 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       document.removeEventListener("visibilitychange", onVisibility)
     }
   }, [checkAuth, expireSessionAndRedirect])
+
+  useEffect(() => {
+    // When on /login, disable navigating back into the app via Back button.
+    if (pathname !== "/login") return
+
+    const lockToLogin = () => {
+      try {
+        window.history.pushState(null, "", "/login")
+      } catch {
+        // ignore
+      }
+    }
+
+    lockToLogin()
+    window.addEventListener("popstate", lockToLogin)
+    return () => window.removeEventListener("popstate", lockToLogin)
+  }, [pathname])
 
   if (protectedRoute && !allowed) return null
   return <>{children}</>
