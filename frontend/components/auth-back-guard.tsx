@@ -46,28 +46,48 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     if (!ok) router.replace("/login")
   }, [pathname, router])
 
+  const expireSessionAndRedirect = useCallback(() => {
+    try {
+      sessionStorage.removeItem("token")
+      sessionStorage.removeItem("user")
+    } catch {
+      // ignore
+    }
+
+    setAllowed(false)
+    if (pathname !== "/login") router.replace("/login")
+  }, [pathname, router])
+
   useLayoutEffect(() => {
     checkAuth()
   }, [checkAuth])
 
   useEffect(() => {
-    const onPageShow = () => checkAuth()
+    const onPageShow = (event: PageTransitionEvent) => {
+      // If the page is restored from the back/forward cache, treat it like a Back/Forward navigation.
+      if (event.persisted) {
+        expireSessionAndRedirect()
+        return
+      }
+      checkAuth()
+    }
     const onVisibility = () => {
       if (document.visibilityState === "visible") checkAuth()
     }
 
     window.addEventListener("pageshow", onPageShow)
-    window.addEventListener("popstate", checkAuth)
+    // Any browser Back/Forward navigation should immediately expire the session.
+    window.addEventListener("popstate", expireSessionAndRedirect)
     window.addEventListener("focus", checkAuth)
     document.addEventListener("visibilitychange", onVisibility)
 
     return () => {
       window.removeEventListener("pageshow", onPageShow)
-      window.removeEventListener("popstate", checkAuth)
+      window.removeEventListener("popstate", expireSessionAndRedirect)
       window.removeEventListener("focus", checkAuth)
       document.removeEventListener("visibilitychange", onVisibility)
     }
-  }, [checkAuth])
+  }, [checkAuth, expireSessionAndRedirect])
 
   if (protectedRoute && !allowed) return null
   return <>{children}</>
