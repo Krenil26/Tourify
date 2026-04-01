@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button"
 
 const API_BASE = "https://tourify-4cuu.onrender.com"
 
+const HIDDEN_FIRST_AID_IDS = new Set(["beeswasps"])
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Destination {
@@ -83,6 +85,10 @@ const FIRST_AID_ICONS: Record<string, any> = {
 
 function getSeverityStyle(s: string) {
     return SEVERITY_STYLE[s] || SEVERITY_STYLE.high
+}
+
+function getVisibleFirstAidGuides(guides: FirstAidGuide[]) {
+    return guides.filter(g => !HIDDEN_FIRST_AID_IDS.has(g.id))
 }
 
 function getPacksFromStorage(): Record<string, OfflinePack> {
@@ -412,6 +418,8 @@ export function OfflineSurvivalDashboard() {
         !searchQuery || d.name.toLowerCase().includes(searchQuery.toLowerCase()) || d.country.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
+    const firstAidGuidesStat = destinations.reduce((max, d) => Math.max(max, d.firstAidGuideCount || 0), 0)
+
     const downloadedList = Object.values(downloadedPacks)
 
     // ─── Loading ─────────────────────────────────────────────────────────────
@@ -483,7 +491,7 @@ export function OfflineSurvivalDashboard() {
                     {[
                         { icon: Package, label: "Packs Available", value: destinations.length, color: "text-emerald-400", bg: "bg-emerald-500/10" },
                         { icon: Download, label: "Downloaded", value: downloadedList.length, color: "text-teal-400", bg: "bg-teal-500/10" },
-                        { icon: Heart, label: "First Aid Guides", value: 8, color: "text-red-400", bg: "bg-red-500/10" },
+                        { icon: Heart, label: "First Aid Guides", value: firstAidGuidesStat, color: "text-red-400", bg: "bg-red-500/10" },
                         { icon: Globe, label: "Languages", value: "10+", color: "text-blue-400", bg: "bg-blue-500/10" },
                     ].map((stat, i) => (
                         <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * i }}
@@ -561,7 +569,7 @@ export function OfflineSurvivalDashboard() {
                                             </div>
                                             <div className="grid grid-cols-3 gap-2 mb-4 text-center">
                                                 {[
-                                                    { label: "Guides", value: pack.firstAid.length, color: "text-red-400" },
+                                                    { label: "Guides", value: getVisibleFirstAidGuides(pack.firstAid).length, color: "text-red-400" },
                                                     { label: "Contacts", value: pack.emergencyContacts.length, color: "text-blue-400" },
                                                     { label: "Languages", value: pack.phrases.length, color: "text-teal-400" },
                                                 ].map((s, i) => (
@@ -712,7 +720,7 @@ export function OfflineSurvivalDashboard() {
                         </div>
 
                         <div className="space-y-3">
-                            {activePack.firstAid.map(guide => (
+                            {getVisibleFirstAidGuides(activePack.firstAid).map(guide => (
                                 <FirstAidCard key={guide.id} guide={guide} />
                             ))}
                         </div>

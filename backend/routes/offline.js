@@ -226,23 +226,6 @@ function getFirstAidGuides(category) {
             ],
             prevention: 'Check fire risk index before entering forest areas. Never light fires in dry periods. Have an escape route planned.',
         },
-        {
-            id: 'beeswasps',
-            title: 'Mass Bee / Wasp Attack',
-            severity: 'high',
-            icon: 'AlertTriangle',
-            symptoms: ['Multiple stings', 'Swelling around stings', 'Hives / rash', 'Anaphylaxis signs: throat swelling, difficulty breathing'],
-            steps: [
-                'Run in a straight line away from the swarm — 100+ metres',
-                'Do NOT swat — it releases more attack pheromones',
-                'Cover your face and head while fleeing',
-                'Submerge in water if available (bees will wait)',
-                'Remove stingers by scraping — do NOT squeeze (pushes more venom)',
-                'For anaphylaxis: use EpiPen if available and evacuate immediately',
-                'Take antihistamine if no anaphylaxis signs',
-            ],
-            prevention: 'Avoid perfumes and bright floral clothing on forest trails. Leave hive areas calmly without sudden movements.',
-        },
     ];
 
     if (category === 'Marine' || category === 'Coastal' || category === 'Island') {
