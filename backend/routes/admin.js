@@ -89,6 +89,50 @@ router.get('/users', authMiddleware, adminMiddleware, async (req, res) => {
     }
 });
 
+// @route   GET api/admin/users/:id/details
+// @desc    Get a user's full details for admin (profile + bookings)
+// @access  Private/Admin
+router.get('/users/:id/details', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const userRef = db.collection('users').doc(userId);
+        const userDoc = await userRef.get();
+
+        if (!userDoc.exists) {
+            return res.status(404).json({ msg: 'User not found' });
+        }
+
+        const userData = userDoc.data() || {};
+        delete userData.password;
+
+        const bookingsSnap = await db.collection('bookings')
+            .where('userId', '==', userId)
+            .get();
+
+        let bookings = bookingsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        bookings.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+        const summary = {
+            total: bookings.length,
+            pending: bookings.filter(b => (b.status || 'pending') === 'pending').length,
+            approved: bookings.filter(b => b.status === 'approved').length,
+            rejected: bookings.filter(b => b.status === 'rejected').length,
+            cancelled: bookings.filter(b => b.status === 'cancelled').length,
+            totalCost: bookings.reduce((sum, b) => sum + (Number(b.totalCost) || 0), 0),
+            lastBookingAt: bookings[0]?.createdAt || null,
+        };
+
+        res.json({
+            user: { id: userDoc.id, ...userData },
+            bookings,
+            summary,
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 // @route   DELETE api/admin/users/:id
 // @desc    Delete a user
 // @access  Private/Admin

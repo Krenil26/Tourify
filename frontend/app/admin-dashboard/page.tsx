@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Fragment } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
@@ -60,6 +60,10 @@ export default function AdminDashboard() {
     const [loadingStats, setLoadingStats] = useState(true)
     const [loadingUsers, setLoadingUsers] = useState(true)
     const [error, setError] = useState<string>("")
+
+    const [openUserId, setOpenUserId] = useState<string>("")
+    const [userDetailsById, setUserDetailsById] = useState<Record<string, any>>({})
+    const [loadingUserDetailsId, setLoadingUserDetailsId] = useState<string>("")
 
     // Auth guard
     useEffect(() => {
@@ -161,7 +165,7 @@ export default function AdminDashboard() {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` }
             })
-            setUsers(prev => prev.filter(u => u._id !== id))
+            setUsers(prev => prev.filter(u => (u.id || u._id) !== id))
         } catch {
             alert("Failed to delete user")
         }
@@ -176,9 +180,41 @@ export default function AdminDashboard() {
                 body: JSON.stringify({ role })
             })
             const updated = await res.json()
-            setUsers(prev => prev.map(u => u._id === id ? { ...u, role: updated.role } : u))
+            setUsers(prev => prev.map(u => (u.id || u._id) === id ? { ...u, role: updated.role } : u))
         } catch {
             alert("Failed to update role")
+        }
+    }
+
+    const getUserId = (u: any) => u?.id || u?._id || ""
+
+    const toggleUserDetails = async (u: any) => {
+        const id = getUserId(u)
+        if (!id) return
+
+        if (openUserId === id) {
+            setOpenUserId("")
+            return
+        }
+
+        setOpenUserId(id)
+        if (userDetailsById[id]) return
+
+        setLoadingUserDetailsId(id)
+        try {
+            const res = await fetch(`${BACKEND}/api/admin/users/${id}/details`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            const data = await res.json()
+            if (!res.ok) {
+                alert(data?.msg || "Failed to load user details")
+                return
+            }
+            setUserDetailsById(prev => ({ ...prev, [id]: data }))
+        } catch {
+            alert("Failed to load user details")
+        } finally {
+            setLoadingUserDetailsId("")
         }
     }
 
@@ -1092,8 +1128,15 @@ export default function AdminDashboard() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
-                                        {filteredUsers.map((u, i) => (
-                                            <motion.tr key={u._id}
+                                        {filteredUsers.map((u, i) => {
+                                            const uid = getUserId(u)
+                                            const isOpen = openUserId === uid
+                                            const details = uid ? userDetailsById[uid] : null
+                                            const isLoadingDetails = loadingUserDetailsId === uid
+
+                                            return (
+                                            <Fragment key={uid || i}>
+                                            <motion.tr key={uid || i}
                                                 initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.03 * i }}
                                                 className="hover:bg-white/3 transition-colors group">
                                                 <td className="px-5 py-4">
@@ -1110,7 +1153,7 @@ export default function AdminDashboard() {
                                                 <td className="px-5 py-4 hidden sm:table-cell">
                                                     <select
                                                         value={u.role}
-                                                        onChange={e => handleRoleChange(u._id, e.target.value)}
+                                                        onChange={e => handleRoleChange(uid, e.target.value)}
                                                         className={`text-[10px] font-bold px-2.5 py-1 rounded-full border bg-transparent cursor-pointer outline-none ${u.role === "admin"
                                                             ? "bg-purple-500/10 text-purple-400 border-purple-500/20"
                                                             : "bg-blue-500/10 text-blue-400 border-blue-500/20"}`}>
@@ -1123,18 +1166,136 @@ export default function AdminDashboard() {
                                                 </td>
                                                 <td className="px-5 py-4">
                                                     <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-all" title="View">
+                                                        <button
+                                                            onClick={() => toggleUserDetails(u)}
+                                                            className={`p-1.5 rounded-lg hover:bg-white/10 transition-all ${isOpen ? "text-emerald-300" : "text-white/40 hover:text-white"}`}
+                                                            title="View Details"
+                                                        >
                                                             <Eye className="w-3.5 h-3.5" />
                                                         </button>
                                                         <button
-                                                            onClick={() => handleDeleteUser(u._id)}
+                                                            onClick={() => handleDeleteUser(uid)}
                                                             className="p-1.5 rounded-lg hover:bg-red-500/10 text-white/40 hover:text-red-400 transition-all" title="Delete">
                                                             <Trash2 className="w-3.5 h-3.5" />
                                                         </button>
                                                     </div>
                                                 </td>
                                             </motion.tr>
-                                        ))}
+
+                                            <AnimatePresence>
+                                                {isOpen && (
+                                                    <motion.tr
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        exit={{ opacity: 0 }}
+                                                        className="bg-white/[0.02]"
+                                                    >
+                                                        <td colSpan={4} className="px-5 pb-5 pt-2">
+                                                            <div className="rounded-2xl border border-white/5 p-4">
+                                                                {isLoadingDetails && (
+                                                                    <div className="flex items-center gap-3 text-xs text-white/40">
+                                                                        <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                                                        Loading user details...
+                                                                    </div>
+                                                                )}
+
+                                                                {!isLoadingDetails && details && (
+                                                                    <div className="space-y-4">
+                                                                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                                                            <div>
+                                                                                <div className="text-sm font-bold text-white">User Details</div>
+                                                                                <div className="text-[11px] text-white/35">Account info + planned trips (bookings) + itinerary.</div>
+                                                                            </div>
+                                                                            <button
+                                                                                onClick={() => setOpenUserId("")}
+                                                                                className="px-3 py-1.5 rounded-lg bg-white/5 text-white/50 text-xs font-medium hover:bg-white/10 transition-all w-fit"
+                                                                            >
+                                                                                Close
+                                                                            </button>
+                                                                        </div>
+
+                                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                                                            <div className="p-3 rounded-xl border border-white/5 bg-white/2">
+                                                                                <div className="text-[10px] text-white/35 uppercase tracking-wider">Joined</div>
+                                                                                <div className="text-sm font-bold text-white mt-0.5">
+                                                                                    {details.user?.createdAt ? new Date(details.user.createdAt).toLocaleString() : "—"}
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="p-3 rounded-xl border border-white/5 bg-white/2">
+                                                                                <div className="text-[10px] text-white/35 uppercase tracking-wider">Phone</div>
+                                                                                <div className="text-sm font-bold text-white mt-0.5">{details.user?.phone || "—"}</div>
+                                                                            </div>
+                                                                            <div className="p-3 rounded-xl border border-white/5 bg-white/2">
+                                                                                <div className="text-[10px] text-white/35 uppercase tracking-wider">Location</div>
+                                                                                <div className="text-sm font-bold text-white mt-0.5">{details.user?.location || "—"}</div>
+                                                                            </div>
+                                                                            <div className="p-3 rounded-xl border border-white/5 bg-white/2">
+                                                                                <div className="text-[10px] text-white/35 uppercase tracking-wider">Bookings</div>
+                                                                                <div className="text-sm font-bold text-white mt-0.5">{details.summary?.total ?? 0}</div>
+                                                                                <div className="text-[10px] text-white/30 mt-0.5">Total spent: ₹{Number(details.summary?.totalCost || 0).toLocaleString()}</div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div>
+                                                                            <div className="flex items-center justify-between mb-2">
+                                                                                <div className="text-xs font-bold text-white/70">Planned Trips / Bookings</div>
+                                                                                <div className="text-[10px] text-white/30">Newest first</div>
+                                                                            </div>
+
+                                                                            {Array.isArray(details.bookings) && details.bookings.length === 0 ? (
+                                                                                <div className="p-4 rounded-xl border border-white/5 bg-white/2 text-xs text-white/35">No bookings found for this user.</div>
+                                                                            ) : (
+                                                                                <div className="space-y-2">
+                                                                                    {(details.bookings || []).slice(0, 10).map((b: any) => (
+                                                                                        <div key={b.id} className="p-4 rounded-xl border border-white/5 bg-white/[0.02]">
+                                                                                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                                                                                <div>
+                                                                                                    <div className="text-sm font-semibold text-white/85">{b.destination || "—"}</div>
+                                                                                                    <div className="text-[11px] text-white/35 mt-0.5">
+                                                                                                        {b.startDate || "—"}{b.endDate ? ` → ${b.endDate}` : ""} · {b.travelers ? `${b.travelers} travelers` : ""}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div className="flex items-center gap-2">
+                                                                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${b.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400' : b.status === 'rejected' ? 'bg-red-500/10 text-red-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                                                                                                        {b.status || 'pending'}
+                                                                                                    </span>
+                                                                                                    <span className="text-xs font-bold text-emerald-300">₹{Number(b.totalCost || 0).toLocaleString()}</span>
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            {Array.isArray(b.itinerary) && b.itinerary.length > 0 && (
+                                                                                                <div className="mt-3">
+                                                                                                    <div className="text-[10px] text-white/35 uppercase tracking-wider font-bold mb-2">Itinerary</div>
+                                                                                                    <div className="space-y-1.5">
+                                                                                                        {b.itinerary.slice(0, 5).map((it: any, idx: number) => (
+                                                                                                            <div key={idx} className="text-xs text-white/60">
+                                                                                                                {typeof it === "string" ? it : (it?.title || it?.activity || it?.place || JSON.stringify(it))}
+                                                                                                            </div>
+                                                                                                        ))}
+                                                                                                        {b.itinerary.length > 5 && (
+                                                                                                            <div className="text-[11px] text-white/30">+{b.itinerary.length - 5} more...</div>
+                                                                                                        )}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    ))}
+                                                                                    {(details.bookings || []).length > 10 && (
+                                                                                        <div className="text-[11px] text-white/30">Showing latest 10 bookings.</div>
+                                                                                    )}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </motion.tr>
+                                                )}
+                                            </AnimatePresence>
+                                            </Fragment>
+                                            )
+                                        })}
                                     </tbody>
                                 </table>
                             </div>
