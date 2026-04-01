@@ -4,7 +4,6 @@ import { FeaturesSection } from "@/components/features-section"
 import { DestinationsPreview } from "@/components/destinations-preview"
 import { AIDemoSection } from "@/components/ai-demo-section"
 import { TestimonialsSection } from "@/components/testimonials-section"
-import { CTASection } from "@/components/cta-section"
 import { Footer } from "@/components/footer"
 
 export default function HomePage() {
@@ -16,7 +15,6 @@ export default function HomePage() {
       <DestinationsPreview />
       <AIDemoSection />
       <TestimonialsSection />
-      <CTASection />
       <Footer />
     </main>
   )
