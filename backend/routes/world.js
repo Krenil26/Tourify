@@ -14,6 +14,23 @@ router.get('/destinations', async (req, res) => {
   }
 });
 
+// Public planner settings (for the AI planner UI)
+router.get('/planner-settings', async (req, res) => {
+  try {
+    const doc = await db.collection('planner_settings').doc('defaults').get();
+    const data = doc.exists ? (doc.data() || {}) : {};
+
+    const multiplier = Number(data.activityCostMultiplier);
+
+    res.json({
+      activityCostMultiplier: Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 100,
+      updatedAt: data.updatedAt || null,
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch planner settings', error: err.message });
+  }
+});
+
 // Fetch trails from Firestore
 router.get('/trails', async (req, res) => {
   try {

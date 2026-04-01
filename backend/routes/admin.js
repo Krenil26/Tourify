@@ -292,6 +292,60 @@ router.put('/destinations/:id', authMiddleware, adminMiddleware, async (req, res
     }
 });
 
+// @route   GET api/admin/planner-settings
+// @desc    Get planner settings (admin)
+// @access  Private/Admin
+router.get('/planner-settings', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const doc = await db.collection('planner_settings').doc('defaults').get();
+        const data = doc.exists ? (doc.data() || {}) : {};
+        const multiplier = Number(data.activityCostMultiplier);
+
+        res.json({
+            activityCostMultiplier: Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 100,
+            updatedAt: data.updatedAt || null,
+            updatedBy: data.updatedBy || null,
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+// @route   PUT api/admin/planner-settings
+// @desc    Update planner settings (admin)
+// @access  Private/Admin
+router.put('/planner-settings', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { activityCostMultiplier } = req.body;
+        const multiplier = Number(activityCostMultiplier);
+
+        if (!Number.isFinite(multiplier) || multiplier <= 0 || multiplier > 100000) {
+            return res.status(400).json({ msg: 'activityCostMultiplier must be a number between 1 and 100000' });
+        }
+
+        const adminDoc = await db.collection('users').doc(req.user.id).get();
+        const adminData = adminDoc.exists ? adminDoc.data() : {};
+
+        const payload = {
+            activityCostMultiplier: multiplier,
+            updatedAt: new Date().toISOString(),
+            updatedBy: {
+                id: req.user.id,
+                name: adminData.name || 'Admin',
+                email: adminData.email || '',
+            },
+        };
+
+        await db.collection('planner_settings').doc('defaults').set(payload, { merge: true });
+
+        res.json(payload);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 // @route   GET api/admin/offline-packs
 // @desc    Get all offline pack controls for admin
 // @access  Private/Admin

@@ -42,11 +42,10 @@ const travelStyles = [
   { id: "shopping", label: "Shopping", icon: ShoppingBag },
 ]
 
-const DEFAULT_ACTIVITY_COST_MULTIPLIER = 100
-
-function scaleDefaultCost(cost: number) {
+function scaleDefaultCost(cost: number, multiplier: number) {
   if (!Number.isFinite(cost) || cost <= 0) return 0
-  return Math.round(cost * DEFAULT_ACTIVITY_COST_MULTIPLIER)
+  if (!Number.isFinite(multiplier) || multiplier <= 0) return Math.round(cost)
+  return Math.round(cost * multiplier)
 }
 
 const sampleItinerary = [
@@ -55,18 +54,18 @@ const sampleItinerary = [
     title: "Arrival & Old Delhi Exploration",
     activities: [
       { time: "10:00 AM", activity: "Arrive at Delhi Airport", icon: Plane, cost: 0 },
-      { time: "12:00 PM", activity: "Check-in at Hotel Taj Palace", icon: Hotel, cost: scaleDefaultCost(150) },
-      { time: "2:00 PM", activity: "Explore Chandni Chowk Market", icon: Camera, cost: scaleDefaultCost(20) },
-      { time: "7:00 PM", activity: "Street Food Tour", icon: Utensils, cost: scaleDefaultCost(30) },
+      { time: "12:00 PM", activity: "Check-in at Hotel Taj Palace", icon: Hotel, cost: scaleDefaultCost(150, 100) },
+      { time: "2:00 PM", activity: "Explore Chandni Chowk Market", icon: Camera, cost: scaleDefaultCost(20, 100) },
+      { time: "7:00 PM", activity: "Street Food Tour", icon: Utensils, cost: scaleDefaultCost(30, 100) },
     ],
   },
   {
     day: 2,
     title: "Iconic Monuments Day",
     activities: [
-      { time: "8:00 AM", activity: "Visit Red Fort", icon: Camera, cost: scaleDefaultCost(15) },
-      { time: "11:00 AM", activity: "Jama Masjid Tour", icon: Building, cost: scaleDefaultCost(10) },
-      { time: "1:00 PM", activity: "Lunch at Karim's", icon: Utensils, cost: scaleDefaultCost(25) },
+      { time: "8:00 AM", activity: "Visit Red Fort", icon: Camera, cost: scaleDefaultCost(15, 100) },
+      { time: "11:00 AM", activity: "Jama Masjid Tour", icon: Building, cost: scaleDefaultCost(10, 100) },
+      { time: "1:00 PM", activity: "Lunch at Karim's", icon: Utensils, cost: scaleDefaultCost(25, 100) },
       { time: "4:00 PM", activity: "India Gate & Rashtrapati Bhavan", icon: Camera, cost: 0 },
     ],
   },
@@ -74,10 +73,10 @@ const sampleItinerary = [
     day: 3,
     title: "Day Trip to Agra",
     activities: [
-      { time: "6:00 AM", activity: "Train to Agra", icon: Plane, cost: scaleDefaultCost(40) },
-      { time: "9:00 AM", activity: "Taj Mahal Sunrise Visit", icon: Camera, cost: scaleDefaultCost(20) },
-      { time: "12:00 PM", activity: "Agra Fort Exploration", icon: Building, cost: scaleDefaultCost(15) },
-      { time: "6:00 PM", activity: "Return to Delhi", icon: Plane, cost: scaleDefaultCost(40) },
+      { time: "6:00 AM", activity: "Train to Agra", icon: Plane, cost: scaleDefaultCost(40, 100) },
+      { time: "9:00 AM", activity: "Taj Mahal Sunrise Visit", icon: Camera, cost: scaleDefaultCost(20, 100) },
+      { time: "12:00 PM", activity: "Agra Fort Exploration", icon: Building, cost: scaleDefaultCost(15, 100) },
+      { time: "6:00 PM", activity: "Return to Delhi", icon: Plane, cost: scaleDefaultCost(40, 100) },
     ],
   },
 ]
@@ -152,6 +151,7 @@ export function AIPlannerInterface() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [activeDestinationData, setActiveDestinationData] = useState<any>(null)
   const [customItinerary, setCustomItinerary] = useState<any[]>([])
+  const [activityCostMultiplier, setActivityCostMultiplier] = useState<number>(100)
 
   // Load destination from URL if present
   useEffect(() => {
@@ -161,6 +161,17 @@ export function AIPlannerInterface() {
       setDestination(dest)
       fetchDestinationData(dest)
     }
+  }, [])
+
+  // Load planner settings (rates multiplier)
+  useEffect(() => {
+    fetch(`https://tourify-4cuu.onrender.com/api/world/planner-settings`)
+      .then((r) => r.json())
+      .then((d) => {
+        const m = Number(d?.activityCostMultiplier)
+        if (Number.isFinite(m) && m > 0) setActivityCostMultiplier(m)
+      })
+      .catch(() => { })
   }, [])
 
   const fetchDestinationData = async (name: string) => {
@@ -193,6 +204,8 @@ export function AIPlannerInterface() {
 
   const generateTrip = async () => {
     setIsGenerating(true)
+
+    const multiplier = Number.isFinite(activityCostMultiplier) && activityCostMultiplier > 0 ? activityCostMultiplier : 100
 
     // Calculate dynamic days based on dates
     let diffDays = 3
@@ -239,55 +252,55 @@ export function AIPlannerInterface() {
         if (i === 1) {
           title = `Arrival in ${dest}`
           activities = [
-            { time: "10:00 AM", activity: `Arrive at ${dest} Airport / Station`, icon: Plane, cost: 50 },
+            { time: "10:00 AM", activity: `Arrive at ${dest} Airport / Station`, icon: Plane, cost: scaleDefaultCost(50, multiplier) },
             { time: "12:00 PM", activity: `Check-in at ${accommodation}`, icon: Hotel, cost: 0 },
             { time: "2:00 PM", activity: `Explore nearby landmarks of ${dest}`, icon: Camera, cost: 0 },
-            { time: "7:00 PM", activity: `Welcome dinner – Local cuisine of ${dest}`, icon: Utensils, cost: 40 },
+            { time: "7:00 PM", activity: `Welcome dinner – Local cuisine of ${dest}`, icon: Utensils, cost: scaleDefaultCost(40, multiplier) },
           ]
         } else if (i === diffDays && diffDays > 1) {
           title = `Farewell & Departure from ${dest}`
           activities = [
             { time: "9:00 AM", activity: `Last morning walk around ${dest}`, icon: Camera, cost: 0 },
-            { time: "11:00 AM", activity: `Souvenir shopping at local market`, icon: ShoppingBag, cost: 30 },
-            { time: "1:00 PM", activity: `Farewell brunch`, icon: Utensils, cost: 35 },
-            { time: "4:00 PM", activity: `Transfer to ${dest} Airport / Station – Departure`, icon: Plane, cost: 40 },
+            { time: "11:00 AM", activity: `Souvenir shopping at local market`, icon: ShoppingBag, cost: scaleDefaultCost(30, multiplier) },
+            { time: "1:00 PM", activity: `Farewell brunch`, icon: Utensils, cost: scaleDefaultCost(35, multiplier) },
+            { time: "4:00 PM", activity: `Transfer to ${dest} Airport / Station – Departure`, icon: Plane, cost: scaleDefaultCost(40, multiplier) },
           ]
         } else {
           const middleThemes = [
             {
               title: `Nature & Scenic Spots in ${dest}`,
               activities: [
-                { time: "8:00 AM", activity: `Guided nature trail & scenic viewpoints`, icon: Tent, cost: 25 },
-                { time: "12:00 PM", activity: `Lunch at a popular local restaurant`, icon: Utensils, cost: 30 },
-                { time: "2:00 PM", activity: `Visit parks, gardens & natural attractions`, icon: Camera, cost: 15 },
-                { time: "7:00 PM", activity: `Sunset point & dinner`, icon: Utensils, cost: 40 },
+                { time: "8:00 AM", activity: `Guided nature trail & scenic viewpoints`, icon: Tent, cost: scaleDefaultCost(25, multiplier) },
+                { time: "12:00 PM", activity: `Lunch at a popular local restaurant`, icon: Utensils, cost: scaleDefaultCost(30, multiplier) },
+                { time: "2:00 PM", activity: `Visit parks, gardens & natural attractions`, icon: Camera, cost: scaleDefaultCost(15, multiplier) },
+                { time: "7:00 PM", activity: `Sunset point & dinner`, icon: Utensils, cost: scaleDefaultCost(40, multiplier) },
               ],
             },
             {
               title: `Cultural Heritage of ${dest}`,
               activities: [
-                { time: "9:00 AM", activity: `Visit historical monuments & temples`, icon: Building, cost: 20 },
-                { time: "12:00 PM", activity: `Traditional lunch experience`, icon: Utensils, cost: 25 },
-                { time: "2:00 PM", activity: `Museum & art gallery tour`, icon: Camera, cost: 15 },
-                { time: "7:00 PM", activity: `Cultural show & local dinner`, icon: Utensils, cost: 45 },
+                { time: "9:00 AM", activity: `Visit historical monuments & temples`, icon: Building, cost: scaleDefaultCost(20, multiplier) },
+                { time: "12:00 PM", activity: `Traditional lunch experience`, icon: Utensils, cost: scaleDefaultCost(25, multiplier) },
+                { time: "2:00 PM", activity: `Museum & art gallery tour`, icon: Camera, cost: scaleDefaultCost(15, multiplier) },
+                { time: "7:00 PM", activity: `Cultural show & local dinner`, icon: Utensils, cost: scaleDefaultCost(45, multiplier) },
               ],
             },
             {
               title: `Adventure Day in ${dest}`,
               activities: [
-                { time: "7:00 AM", activity: `Trekking / off-road adventure activity`, icon: Mountain, cost: 50 },
-                { time: "12:00 PM", activity: `Picnic lunch at adventure site`, icon: Utensils, cost: 20 },
-                { time: "3:00 PM", activity: `Water sports / zip-lining / cycling`, icon: Sparkles, cost: 40 },
-                { time: "8:00 PM", activity: `Campfire dinner & stargazing`, icon: Utensils, cost: 35 },
+                { time: "7:00 AM", activity: `Trekking / off-road adventure activity`, icon: Mountain, cost: scaleDefaultCost(50, multiplier) },
+                { time: "12:00 PM", activity: `Picnic lunch at adventure site`, icon: Utensils, cost: scaleDefaultCost(20, multiplier) },
+                { time: "3:00 PM", activity: `Water sports / zip-lining / cycling`, icon: Sparkles, cost: scaleDefaultCost(40, multiplier) },
+                { time: "8:00 PM", activity: `Campfire dinner & stargazing`, icon: Utensils, cost: scaleDefaultCost(35, multiplier) },
               ],
             },
             {
               title: `Relaxation & Local Life in ${dest}`,
               activities: [
-                { time: "10:00 AM", activity: `Spa & wellness retreat`, icon: Sparkles, cost: 60 },
-                { time: "1:00 PM", activity: `Farm-to-table lunch experience`, icon: Utensils, cost: 30 },
+                { time: "10:00 AM", activity: `Spa & wellness retreat`, icon: Sparkles, cost: scaleDefaultCost(60, multiplier) },
+                { time: "1:00 PM", activity: `Farm-to-table lunch experience`, icon: Utensils, cost: scaleDefaultCost(30, multiplier) },
                 { time: "3:00 PM", activity: `Local village walk & interaction`, icon: Building, cost: 0 },
-                { time: "7:00 PM", activity: `Rooftop dinner with city views`, icon: Utensils, cost: 50 },
+                { time: "7:00 PM", activity: `Rooftop dinner with city views`, icon: Utensils, cost: scaleDefaultCost(50, multiplier) },
               ],
             },
           ]
@@ -316,44 +329,44 @@ export function AIPlannerInterface() {
       if (i === 1) {
         title = `Arrival in ${dest}`
         activities = [
-          { time: "10:00 AM", activity: `Arrive at ${dest} Airport / Station`, icon: Plane, cost: scaleDefaultCost(50) },
+          { time: "10:00 AM", activity: `Arrive at ${dest} Airport / Station`, icon: Plane, cost: scaleDefaultCost(50, multiplier) },
           { time: "12:00 PM", activity: `Check-in at ${accommodation}`, icon: Hotel, cost: 0 },
           { time: "2:00 PM", activity: `Explore nearby landmarks of ${dest}`, icon: Camera, cost: 0 },
-          { time: "7:00 PM", activity: `Welcome dinner – Local cuisine of ${dest}`, icon: Utensils, cost: scaleDefaultCost(40) },
+          { time: "7:00 PM", activity: `Welcome dinner – Local cuisine of ${dest}`, icon: Utensils, cost: scaleDefaultCost(40, multiplier) },
         ]
       } else if (i === diffDays && diffDays > 1) {
         title = `Farewell & Departure from ${dest}`
         activities = [
           { time: "9:00 AM", activity: `Last morning walk around ${dest}`, icon: Camera, cost: 0 },
-          { time: "11:00 AM", activity: `Souvenir shopping at local market`, icon: ShoppingBag, cost: scaleDefaultCost(30) },
-          { time: "1:00 PM", activity: `Farewell brunch`, icon: Utensils, cost: scaleDefaultCost(35) },
-          { time: "4:00 PM", activity: `Transfer to ${dest} Airport / Station – Departure`, icon: Plane, cost: scaleDefaultCost(40) },
+          { time: "11:00 AM", activity: `Souvenir shopping at local market`, icon: ShoppingBag, cost: scaleDefaultCost(30, multiplier) },
+          { time: "1:00 PM", activity: `Farewell brunch`, icon: Utensils, cost: scaleDefaultCost(35, multiplier) },
+          { time: "4:00 PM", activity: `Transfer to ${dest} Airport / Station – Departure`, icon: Plane, cost: scaleDefaultCost(40, multiplier) },
         ]
       } else {
         const middleThemes = [
           { title: `Nature & Scenic Spots in ${dest}`, activities: [
-            { time: "8:00 AM", activity: `Guided nature trail & scenic viewpoints`, icon: Tent, cost: scaleDefaultCost(25) },
-            { time: "12:00 PM", activity: `Lunch at a popular local restaurant`, icon: Utensils, cost: scaleDefaultCost(30) },
-            { time: "2:00 PM", activity: `Visit parks, gardens & natural attractions`, icon: Camera, cost: scaleDefaultCost(15) },
-            { time: "7:00 PM", activity: `Sunset point & dinner`, icon: Utensils, cost: scaleDefaultCost(40) },
+            { time: "8:00 AM", activity: `Guided nature trail & scenic viewpoints`, icon: Tent, cost: scaleDefaultCost(25, multiplier) },
+            { time: "12:00 PM", activity: `Lunch at a popular local restaurant`, icon: Utensils, cost: scaleDefaultCost(30, multiplier) },
+            { time: "2:00 PM", activity: `Visit parks, gardens & natural attractions`, icon: Camera, cost: scaleDefaultCost(15, multiplier) },
+            { time: "7:00 PM", activity: `Sunset point & dinner`, icon: Utensils, cost: scaleDefaultCost(40, multiplier) },
           ]},
           { title: `Cultural Heritage of ${dest}`, activities: [
-            { time: "9:00 AM", activity: `Visit historical monuments & temples`, icon: Building, cost: scaleDefaultCost(20) },
-            { time: "12:00 PM", activity: `Traditional lunch experience`, icon: Utensils, cost: scaleDefaultCost(25) },
-            { time: "2:00 PM", activity: `Museum & art gallery tour`, icon: Camera, cost: scaleDefaultCost(15) },
-            { time: "7:00 PM", activity: `Cultural show & local dinner`, icon: Utensils, cost: scaleDefaultCost(45) },
+            { time: "9:00 AM", activity: `Visit historical monuments & temples`, icon: Building, cost: scaleDefaultCost(20, multiplier) },
+            { time: "12:00 PM", activity: `Traditional lunch experience`, icon: Utensils, cost: scaleDefaultCost(25, multiplier) },
+            { time: "2:00 PM", activity: `Museum & art gallery tour`, icon: Camera, cost: scaleDefaultCost(15, multiplier) },
+            { time: "7:00 PM", activity: `Cultural show & local dinner`, icon: Utensils, cost: scaleDefaultCost(45, multiplier) },
           ]},
           { title: `Adventure Day in ${dest}`, activities: [
-            { time: "7:00 AM", activity: `Trekking / off-road adventure activity`, icon: Mountain, cost: scaleDefaultCost(50) },
-            { time: "12:00 PM", activity: `Picnic lunch at adventure site`, icon: Utensils, cost: scaleDefaultCost(20) },
-            { time: "3:00 PM", activity: `Water sports / zip-lining / cycling`, icon: Sparkles, cost: scaleDefaultCost(40) },
-            { time: "8:00 PM", activity: `Campfire dinner & stargazing`, icon: Utensils, cost: scaleDefaultCost(35) },
+            { time: "7:00 AM", activity: `Trekking / off-road adventure activity`, icon: Mountain, cost: scaleDefaultCost(50, multiplier) },
+            { time: "12:00 PM", activity: `Picnic lunch at adventure site`, icon: Utensils, cost: scaleDefaultCost(20, multiplier) },
+            { time: "3:00 PM", activity: `Water sports / zip-lining / cycling`, icon: Sparkles, cost: scaleDefaultCost(40, multiplier) },
+            { time: "8:00 PM", activity: `Campfire dinner & stargazing`, icon: Utensils, cost: scaleDefaultCost(35, multiplier) },
           ]},
           { title: `Relaxation & Local Life in ${dest}`, activities: [
-            { time: "10:00 AM", activity: `Spa & wellness retreat`, icon: Sparkles, cost: scaleDefaultCost(60) },
-            { time: "1:00 PM", activity: `Farm-to-table lunch experience`, icon: Utensils, cost: scaleDefaultCost(30) },
+            { time: "10:00 AM", activity: `Spa & wellness retreat`, icon: Sparkles, cost: scaleDefaultCost(60, multiplier) },
+            { time: "1:00 PM", activity: `Farm-to-table lunch experience`, icon: Utensils, cost: scaleDefaultCost(30, multiplier) },
             { time: "3:00 PM", activity: `Local village walk & interaction`, icon: Building, cost: 0 },
-            { time: "7:00 PM", activity: `Rooftop dinner with city views`, icon: Utensils, cost: scaleDefaultCost(50) },
+            { time: "7:00 PM", activity: `Rooftop dinner with city views`, icon: Utensils, cost: scaleDefaultCost(50, multiplier) },
           ]},
         ]
         const theme = middleThemes[(i - 2) % middleThemes.length]

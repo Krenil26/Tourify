@@ -40,6 +40,11 @@ export default function AdminDashboard() {
     const [bookings, setBookings] = useState<any[]>([])
     const [showNotif, setShowNotif] = useState(false)
 
+    // Planner rate controls
+    const [plannerMultiplier, setPlannerMultiplier] = useState<string>("100")
+    const [loadingPlannerSettings, setLoadingPlannerSettings] = useState(true)
+    const [savingPlannerSettings, setSavingPlannerSettings] = useState(false)
+
     // Destinations management
     const [destinations, setDestinations] = useState<any[]>([])
     const [loadingDest, setLoadingDest] = useState(true)
@@ -129,6 +134,49 @@ export default function AdminDashboard() {
             .then(d => { setDestinations(Array.isArray(d) ? d : []); setLoadingDest(false) })
             .catch(() => setLoadingDest(false))
     }, [token])
+
+    // Fetch planner settings
+    useEffect(() => {
+        if (!token) return
+        setLoadingPlannerSettings(true)
+        fetch(`${BACKEND}/api/admin/planner-settings`, {
+            headers: { Authorization: `Bearer ${token}` }
+        })
+            .then(r => r.json())
+            .then(d => {
+                const m = Number(d?.activityCostMultiplier)
+                setPlannerMultiplier(String(Number.isFinite(m) && m > 0 ? m : 100))
+                setLoadingPlannerSettings(false)
+            })
+            .catch(() => setLoadingPlannerSettings(false))
+    }, [token])
+
+    const savePlannerMultiplier = async () => {
+        const m = Number(plannerMultiplier)
+        if (!Number.isFinite(m) || m <= 0) {
+            alert("Multiplier must be a positive number")
+            return
+        }
+        setSavingPlannerSettings(true)
+        try {
+            const res = await fetch(`${BACKEND}/api/admin/planner-settings`, {
+                method: "PUT",
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ activityCostMultiplier: m })
+            })
+            const data = await res.json()
+            if (!res.ok) {
+                alert(data?.msg || "Failed to save planner settings")
+                return
+            }
+            const saved = Number(data?.activityCostMultiplier)
+            setPlannerMultiplier(String(Number.isFinite(saved) && saved > 0 ? saved : m))
+        } catch {
+            alert("Failed to save planner settings")
+        } finally {
+            setSavingPlannerSettings(false)
+        }
+    }
 
     // Fetch notifications
     useEffect(() => {
@@ -639,6 +687,37 @@ export default function AdminDashboard() {
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium hover:bg-emerald-500/20 transition-all">
                                 <Plus className="w-3 h-3" /> Add Place
                             </button>
+                        </div>
+
+                        {/* Planner Rates */}
+                        <div className="p-5 border-b border-white/5 bg-white/[0.02]">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <div className="text-xs font-bold text-white/80">Planner Activity Rate Multiplier</div>
+                                    <div className="text-[11px] text-white/35">Controls default AI planner activity costs (₹) when a destination doesn’t have a custom itinerary.</div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        value={plannerMultiplier}
+                                        onChange={(e) => setPlannerMultiplier(e.target.value)}
+                                        disabled={loadingPlannerSettings}
+                                        className="w-28 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white outline-none focus:border-emerald-500/50 disabled:opacity-60"
+                                    />
+                                    <button
+                                        onClick={savePlannerMultiplier}
+                                        disabled={loadingPlannerSettings || savingPlannerSettings}
+                                        className="px-4 py-2 rounded-lg bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 transition-all disabled:opacity-50"
+                                    >
+                                        {savingPlannerSettings ? "Saving..." : "Save"}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="text-[10px] text-white/30 mt-2">
+                                Preview: 25 → {formatINR(25 * Number(plannerMultiplier || 0))}
+                            </div>
                         </div>
 
                         {/* Add Place Form */}
