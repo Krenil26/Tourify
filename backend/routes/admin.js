@@ -203,6 +203,51 @@ router.delete('/destinations/:id', authMiddleware, adminMiddleware, async (req, 
     }
 });
 
+// @route   PUT api/admin/destinations/:id
+// @desc    Update a destination (admin)
+// @access  Private/Admin
+router.put('/destinations/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const ref = db.collection('destinations').doc(req.params.id);
+        const doc = await ref.get();
+        if (!doc.exists) {
+            return res.status(404).json({ msg: 'Destination not found' });
+        }
+
+        const allowed = ['name', 'country', 'image', 'price', 'category', 'description', 'rating', 'tags', 'bestTime', 'itinerary'];
+        const updates = {};
+
+        for (const key of allowed) {
+            if (req.body[key] !== undefined) updates[key] = req.body[key];
+        }
+
+        if (updates.price !== undefined) updates.price = Number(updates.price);
+        if (updates.rating !== undefined) updates.rating = Number(updates.rating);
+
+        // Basic itinerary sanity: ensure it's an array if provided
+        if (updates.itinerary !== undefined && !Array.isArray(updates.itinerary)) {
+            return res.status(400).json({ msg: 'Invalid itinerary format' });
+        }
+
+        const adminDoc = await db.collection('users').doc(req.user.id).get();
+        const adminData = adminDoc.exists ? adminDoc.data() : {};
+
+        updates.updatedAt = new Date().toISOString();
+        updates.updatedBy = {
+            id: req.user.id,
+            name: adminData.name || 'Admin',
+            email: adminData.email || '',
+        };
+
+        await ref.update(updates);
+        const updatedDoc = await ref.get();
+        res.json({ id: updatedDoc.id, ...updatedDoc.data() });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
 // @route   GET api/admin/offline-packs
 // @desc    Get all offline pack controls for admin
 // @access  Private/Admin

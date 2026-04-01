@@ -46,6 +46,10 @@ export default function AdminDashboard() {
     const [newPlace, setNewPlace] = useState({ name: "", country: "", price: "", category: "Nature", image: "", description: "", bestTime: "" })
     const [addingPlace, setAddingPlace] = useState(false)
 
+    const [openDestId, setOpenDestId] = useState<string>("")
+    const [destDraft, setDestDraft] = useState<any>(null)
+    const [savingDestId, setSavingDestId] = useState<string>("")
+
     // Offline survival management
     const [offlinePacks, setOfflinePacks] = useState<any[]>([])
     const [offlineSummary, setOfflineSummary] = useState<any>(null)
@@ -218,6 +222,132 @@ export default function AdminDashboard() {
         } catch {
             alert("Failed to delete destination")
         }
+    }
+
+    const openEditor = (d: any) => {
+        const isClosing = openDestId === d.id
+        if (isClosing) {
+            setOpenDestId("")
+            setDestDraft(null)
+            return
+        }
+
+        setOpenDestId(d.id)
+        setDestDraft({
+            price: d.price ?? 0,
+            rating: d.rating ?? 4.5,
+            itinerary: Array.isArray(d.itinerary) ? d.itinerary : [],
+        })
+    }
+
+    const handleSaveDestination = async (id: string) => {
+        if (!destDraft) return
+        setSavingDestId(id)
+        try {
+            const normalizedItinerary = (Array.isArray(destDraft.itinerary) ? destDraft.itinerary : []).map((day: any, idx: number) => {
+                const items = (Array.isArray(day?.items) ? day.items : []).map((it: any) => {
+                    const costStr = it?.cost
+                    const costNum = costStr === "" || costStr === null || costStr === undefined ? undefined : Number(costStr)
+                    return {
+                        time: it?.time || "",
+                        title: it?.title || "",
+                        ...(Number.isFinite(costNum as any) ? { cost: costNum } : {}),
+                    }
+                })
+
+                return {
+                    day: idx + 1,
+                    date: day?.date || "",
+                    title: day?.title || "",
+                    items,
+                }
+            })
+
+            const payload = {
+                price: Number(destDraft.price) || 0,
+                rating: Number(destDraft.rating) || 0,
+                itinerary: normalizedItinerary,
+            }
+
+            const res = await fetch(`${BACKEND}/api/admin/destinations/${id}`, {
+                method: "PUT",
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            const updated = await res.json()
+            if (!res.ok) {
+                alert(updated?.msg || "Failed to save destination")
+                return
+            }
+            setDestinations(prev => prev.map(d => d.id === id ? { ...d, ...updated } : d))
+            setOpenDestId("")
+            setDestDraft(null)
+        } catch {
+            alert("Failed to save destination")
+        } finally {
+            setSavingDestId("")
+        }
+    }
+
+    const addItineraryDay = () => {
+        setDestDraft((prev: any) => {
+            const itinerary = Array.isArray(prev?.itinerary) ? prev.itinerary : []
+            const nextDay = itinerary.length + 1
+            return { ...prev, itinerary: [...itinerary, { day: nextDay, date: "", title: "", items: [] }] }
+        })
+    }
+
+    const removeItineraryDay = (dayIndex: number) => {
+        setDestDraft((prev: any) => {
+            const itinerary = Array.isArray(prev?.itinerary) ? prev.itinerary : []
+            const next = itinerary.filter((_: any, idx: number) => idx !== dayIndex)
+                .map((d: any, idx: number) => ({ ...d, day: idx + 1 }))
+            return { ...prev, itinerary: next }
+        })
+    }
+
+    const updateDayField = (dayIndex: number, field: string, value: any) => {
+        setDestDraft((prev: any) => {
+            const itinerary = Array.isArray(prev?.itinerary) ? prev.itinerary : []
+            const next = itinerary.map((d: any, idx: number) => idx === dayIndex ? { ...d, [field]: value } : d)
+            return { ...prev, itinerary: next }
+        })
+    }
+
+    const addDayItem = (dayIndex: number) => {
+        setDestDraft((prev: any) => {
+            const itinerary = Array.isArray(prev?.itinerary) ? prev.itinerary : []
+            const next = itinerary.map((d: any, idx: number) => {
+                if (idx !== dayIndex) return d
+                const items = Array.isArray(d.items) ? d.items : []
+                return { ...d, items: [...items, { time: "", title: "", cost: "" }] }
+            })
+            return { ...prev, itinerary: next }
+        })
+    }
+
+    const removeDayItem = (dayIndex: number, itemIndex: number) => {
+        setDestDraft((prev: any) => {
+            const itinerary = Array.isArray(prev?.itinerary) ? prev.itinerary : []
+            const next = itinerary.map((d: any, idx: number) => {
+                if (idx !== dayIndex) return d
+                const items = Array.isArray(d.items) ? d.items : []
+                return { ...d, items: items.filter((_: any, ii: number) => ii !== itemIndex) }
+            })
+            return { ...prev, itinerary: next }
+        })
+    }
+
+    const updateDayItemField = (dayIndex: number, itemIndex: number, field: string, value: any) => {
+        setDestDraft((prev: any) => {
+            const itinerary = Array.isArray(prev?.itinerary) ? prev.itinerary : []
+            const next = itinerary.map((d: any, idx: number) => {
+                if (idx !== dayIndex) return d
+                const items = Array.isArray(d.items) ? d.items : []
+                return { ...d, items: items.map((it: any, ii: number) => ii === itemIndex ? { ...it, [field]: value } : it) }
+            })
+            return { ...prev, itinerary: next }
+        })
     }
 
     // Update booking status
@@ -533,46 +663,234 @@ export default function AdminDashboard() {
                         ) : (
                             <div className="divide-y divide-white/5">
                                 {destinations.map((d, i) => (
-                                    <motion.div key={d.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.03 * i }}
-                                        className="flex items-center justify-between p-4 hover:bg-white/2 transition-colors group">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 shrink-0">
-                                                {d.image ? (
-                                                    <img src={d.image} alt={d.name} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center"><Image className="w-5 h-5 text-white/20" /></div>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <div className="text-sm font-semibold text-white">{d.name}</div>
-                                                <div className="text-xs text-white/40 flex items-center gap-2">
-                                                    <span>{d.country}</span>
-                                                    <span className="w-1 h-1 rounded-full bg-white/20" />
-                                                    <span>{d.category}</span>
-                                                    <span className="w-1 h-1 rounded-full bg-white/20" />
-                                                    <span>₹{d.price?.toLocaleString()}</span>
+                                    <div key={d.id}>
+                                        <motion.div
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.03 * i }}
+                                            onClick={() => openEditor(d)}
+                                            className="flex items-center justify-between p-4 hover:bg-white/2 transition-colors group cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/5 shrink-0">
+                                                    {d.image ? (
+                                                        <img src={d.image} alt={d.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center"><Image className="w-5 h-5 text-white/20" /></div>
+                                                    )}
                                                 </div>
-                                                {d.createdBy && (
-                                                    <div className="text-[10px] text-white/30 flex items-center gap-1.5 mt-1">
-                                                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[9px]">
-                                                            {d.createdBy.name?.charAt(0).toUpperCase()}
-                                                        </span>
-                                                        <span>Added by {d.createdBy.name}</span>
-                                                        {d.createdAt && (
+                                                <div>
+                                                    <div className="text-sm font-semibold text-white flex items-center gap-2">
+                                                        {d.name}
+                                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/35">Click to edit</span>
+                                                    </div>
+                                                    <div className="text-xs text-white/40 flex items-center gap-2">
+                                                        <span>{d.country}</span>
+                                                        <span className="w-1 h-1 rounded-full bg-white/20" />
+                                                        <span>{d.category}</span>
+                                                        <span className="w-1 h-1 rounded-full bg-white/20" />
+                                                        <span>₹{d.price?.toLocaleString?.() ?? d.price}</span>
+                                                        {d.rating !== undefined && d.rating !== null && (
                                                             <>
                                                                 <span className="w-1 h-1 rounded-full bg-white/20" />
-                                                                <span>{new Date(d.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                                                <span>{Number(d.rating).toFixed(1)}★</span>
                                                             </>
                                                         )}
                                                     </div>
-                                                )}
+                                                    {d.createdBy && (
+                                                        <div className="text-[10px] text-white/30 flex items-center gap-1.5 mt-1">
+                                                            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[9px]">
+                                                                {d.createdBy.name?.charAt(0).toUpperCase()}
+                                                            </span>
+                                                            <span>Added by {d.createdBy.name}</span>
+                                                            {d.createdAt && (
+                                                                <>
+                                                                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                                                                    <span>{new Date(d.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <button onClick={() => handleDeletePlace(d.id)}
-                                            className="p-2 rounded-lg hover:bg-red-500/10 text-white/30 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100" title="Delete">
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </motion.div>
+                                            <div className="flex items-center gap-1.5">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); openEditor(d) }}
+                                                    className="p-2 rounded-lg hover:bg-emerald-500/10 text-white/30 hover:text-emerald-300 transition-all opacity-0 group-hover:opacity-100"
+                                                    title="Edit"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleDeletePlace(d.id) }}
+                                                    className="p-2 rounded-lg hover:bg-red-500/10 text-white/30 hover:text-red-400 transition-all opacity-0 group-hover:opacity-100"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </motion.div>
+
+                                        <AnimatePresence>
+                                            {openDestId === d.id && destDraft && (
+                                                <motion.div
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: "auto", opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="overflow-hidden border-t border-white/5"
+                                                >
+                                                    <div className="p-5 bg-white/[0.02]">
+                                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                                                            <div>
+                                                                <div className="text-sm font-bold text-white">Edit Destination</div>
+                                                                <div className="text-[11px] text-white/35">Update price/rating and create day-wise itinerary (time + place/activity + cost).</div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    onClick={() => handleSaveDestination(d.id)}
+                                                                    disabled={savingDestId === d.id}
+                                                                    className="px-4 py-2 rounded-lg bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 transition-all disabled:opacity-50"
+                                                                >
+                                                                    {savingDestId === d.id ? "Saving..." : "Save"}
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => { setOpenDestId(""); setDestDraft(null) }}
+                                                                    className="px-4 py-2 rounded-lg bg-white/5 text-white/50 text-xs font-medium hover:bg-white/10 transition-all"
+                                                                >
+                                                                    Close
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Price (₹)</label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={destDraft.price}
+                                                                    onChange={(e) => setDestDraft((p: any) => ({ ...p, price: e.target.value }))}
+                                                                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Rating</label>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.1"
+                                                                    value={destDraft.rating}
+                                                                    onChange={(e) => setDestDraft((p: any) => ({ ...p, rating: e.target.value }))}
+                                                                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center justify-between gap-3 mb-3">
+                                                            <div className="text-xs font-bold text-white/70">Day-wise Itinerary</div>
+                                                            <button
+                                                                onClick={addItineraryDay}
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium hover:bg-emerald-500/20 transition-all"
+                                                            >
+                                                                <Plus className="w-3 h-3" /> Add Day
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="space-y-4">
+                                                            {(Array.isArray(destDraft.itinerary) ? destDraft.itinerary : []).length === 0 ? (
+                                                                <div className="p-4 rounded-xl border border-white/5 bg-white/2 text-xs text-white/35">No itinerary yet. Click “Add Day”.</div>
+                                                            ) : (
+                                                                (destDraft.itinerary as any[]).map((day, dayIndex) => (
+                                                                    <div key={dayIndex} className="rounded-2xl border border-white/5 overflow-hidden">
+                                                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-4 bg-white/[0.02] border-b border-white/5">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold">{dayIndex + 1}</span>
+                                                                                <span className="text-sm font-bold text-white">Day {dayIndex + 1}</span>
+                                                                            </div>
+                                                                            <button
+                                                                                onClick={() => removeItineraryDay(dayIndex)}
+                                                                                className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-xs font-medium hover:bg-red-500/15 transition-all w-fit"
+                                                                            >
+                                                                                Remove Day
+                                                                            </button>
+                                                                        </div>
+
+                                                                        <div className="p-4 space-y-3">
+                                                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                                                <div className="space-y-1">
+                                                                                    <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Date (optional)</label>
+                                                                                    <input
+                                                                                        value={day.date || ""}
+                                                                                        onChange={(e) => updateDayField(dayIndex, "date", e.target.value)}
+                                                                                        placeholder="Apr 1, 2026"
+                                                                                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50"
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="space-y-1 lg:col-span-2">
+                                                                                    <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Day Title</label>
+                                                                                    <input
+                                                                                        value={day.title || ""}
+                                                                                        onChange={(e) => updateDayField(dayIndex, "title", e.target.value)}
+                                                                                        placeholder="Arrival / City tour / Nature day..."
+                                                                                        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50"
+                                                                                    />
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div className="flex items-center justify-between gap-3">
+                                                                                <div className="text-[11px] text-white/35 font-bold uppercase tracking-wider">Places / Activities</div>
+                                                                                <button
+                                                                                    onClick={() => addDayItem(dayIndex)}
+                                                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/60 text-xs font-medium hover:bg-white/10 transition-all"
+                                                                                >
+                                                                                    <Plus className="w-3 h-3" /> Add Place
+                                                                                </button>
+                                                                            </div>
+
+                                                                            <div className="space-y-2">
+                                                                                {(Array.isArray(day.items) ? day.items : []).length === 0 ? (
+                                                                                    <div className="p-3 rounded-xl border border-white/5 bg-white/2 text-xs text-white/35">No places added for this day.</div>
+                                                                                ) : (
+                                                                                    (day.items as any[]).map((it, itemIndex) => (
+                                                                                        <div key={itemIndex} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-3 rounded-xl border border-white/5 bg-white/[0.02]">
+                                                                                            <input
+                                                                                                value={it.time || ""}
+                                                                                                onChange={(e) => updateDayItemField(dayIndex, itemIndex, "time", e.target.value)}
+                                                                                                placeholder="10:00 AM"
+                                                                                                className="sm:col-span-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50"
+                                                                                            />
+                                                                                            <input
+                                                                                                value={it.title || ""}
+                                                                                                onChange={(e) => updateDayItemField(dayIndex, itemIndex, "title", e.target.value)}
+                                                                                                placeholder="Arrive / Check-in / Explore..."
+                                                                                                className="sm:col-span-7 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50"
+                                                                                            />
+                                                                                            <input
+                                                                                                type="number"
+                                                                                                value={it.cost ?? ""}
+                                                                                                onChange={(e) => updateDayItemField(dayIndex, itemIndex, "cost", e.target.value)}
+                                                                                                placeholder="₹"
+                                                                                                className="sm:col-span-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50"
+                                                                                            />
+                                                                                            <button
+                                                                                                onClick={() => removeDayItem(dayIndex, itemIndex)}
+                                                                                                className="sm:col-span-1 p-2 rounded-lg hover:bg-red-500/10 text-white/30 hover:text-red-300 transition-all"
+                                                                                                title="Remove"
+                                                                                            >
+                                                                                                <Trash2 className="w-4 h-4" />
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    ))
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
                                 ))}
                             </div>
                         )}
