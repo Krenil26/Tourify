@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { formatINR } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Search, MapPin, Star, Heart, Plane, Calendar, Sparkles, Globe, X, SlidersHorizontal, Hotel, Car, Bike, LayoutGrid, Map as MapIcon } from "lucide-react"
 import Link from "next/link"
@@ -367,7 +368,7 @@ export function DestinationsExplorer() {
                     </div>
                     {item.price && (
                       <div className="text-right">
-                        <span className="text-base font-black text-primary">₹{item.price}</span>
+                        <span className="text-base font-black text-primary">{formatINR(item.price)}</span>
                       </div>
                     )}
                   </div>

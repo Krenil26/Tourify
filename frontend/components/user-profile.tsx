@@ -32,6 +32,7 @@ import {
   Users,
   LogOut,
 } from "lucide-react"
+import { formatINR } from "@/lib/utils"
 
 const bookings = [
   {
@@ -307,7 +308,7 @@ export function UserProfile() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-3xl font-extrabold text-foreground">₹{booking.totalCost}</div>
+                          <div className="text-3xl font-extrabold text-foreground">{formatINR(booking.totalCost)}</div>
                         <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mt-1 text-emerald-600/60">Total Budget</div>
                       </div>
                     </div>

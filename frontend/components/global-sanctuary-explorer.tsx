@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Globe, Leaf, Star, MapPin, Clock, DollarSign, Filter, Search, ChevronRight, Mountain, Waves, Building2, Compass, Users, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { formatINR } from "@/lib/utils"
 
 const CONTINENT_COLORS: { [key: string]: string } = {
     "Asia": "from-amber-500/20 to-orange-500/10 border-amber-500/20",
@@ -344,7 +345,7 @@ function SanctuaryCard({ dest, index }: { dest: any; index: number }) {
                                 <span className="text-[11px]">{dest.bestTime}</span>
                             </div>
                             <div className="flex items-center gap-1">
-                                <span className="text-xs font-bold text-foreground">₹{dest.price}</span>
+                                <span className="text-xs font-bold text-foreground">{formatINR(dest.price)}</span>
                                 <span className="text-[10px] text-muted-foreground">/trip</span>
                             </div>
                         </div>

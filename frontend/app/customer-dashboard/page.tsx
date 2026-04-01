@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
+import { formatINR } from "@/lib/utils"
 import {
     LayoutDashboard, Map, Compass, Shield, Globe, Bird, Users,
     LogOut, Menu, Bell, Star, Heart, Leaf, ChevronRight, MapPin,
@@ -371,7 +372,7 @@ export default function CustomerDashboard() {
                                                 <span className="text-sm font-bold text-white">{dest.rating}</span>
                                                 <span className="text-xs text-white/30">({dest.reviews})</span>
                                             </div>
-                                            <div className="text-sm font-bold text-emerald-400 mt-1">₹{dest.price}<span className="text-[10px] text-white/30">/person</span></div>
+                                            <div className="text-sm font-bold text-emerald-400 mt-1">{formatINR(dest.price)}<span className="text-[10px] text-white/30">/person</span></div>
                                         </div>
                                         <Link href={`/planner?destination=${encodeURIComponent(dest.name)}`}>
                                             <button className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium hover:bg-emerald-500/20">
@@ -436,7 +437,7 @@ export default function CustomerDashboard() {
                                                 }`}>
                                                 {b.status || 'pending'}
                                             </div>
-                                            <p className="text-xs font-bold text-white/60">₹{b.totalCost?.toLocaleString()}</p>
+                                            <p className="text-xs font-bold text-white/60">{formatINR(b.totalCost)}</p>
                                         </div>
                                     </motion.div>
                                 ))}

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
+import { formatINR } from "@/lib/utils"
 import { motion } from "framer-motion"
 import { Calendar, Users, Briefcase, MapPin, CheckCircle, Clock, XCircle, ChevronRight, Activity, Download } from "lucide-react"
 import Link from "next/link"
@@ -111,10 +112,10 @@ export default function MyBookingsPage() {
 
         const totalBill = booking.totalCost || 0
         const costData = [
-            ["Eco-Trail Package", `INR ${totalBill.toLocaleString()}`],
+            ["Eco-Trail Package", formatINR(totalBill)],
             ["Conservation Fee", "INCLUDED"],
             ["Taxes & Levis", "INCLUDED"],
-            ["TOTAL AMOUNT PAID", `INR ${totalBill.toLocaleString()}`],
+            ["TOTAL AMOUNT PAID", formatINR(totalBill)],
         ]
 
         autoTable(doc, {
@@ -214,7 +215,7 @@ export default function MyBookingsPage() {
                                                 <span>{booking.travelers} Travelers</span>
                                             </div>
                                             <div className="flex items-center gap-2 text-sm font-semibold">
-                                                <span className="text-emerald-400">₹{booking.totalCost?.toLocaleString()}</span>
+                                                <span className="text-emerald-400">{formatINR(booking.totalCost)}</span>
                                             </div>
                                         </div>
                                     </div>

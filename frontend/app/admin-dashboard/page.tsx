@@ -12,6 +12,7 @@ import {
     Filter, Eye, MoreVertical, Info, X, RefreshCw, MapPin, Plus, Image, DollarSign, Tag,
     Radio, Lock, Unlock, Download
 } from "lucide-react"
+import { formatINR } from "@/lib/utils"
 
 const BACKEND = "https://tourify-4cuu.onrender.com"
 
@@ -270,6 +271,13 @@ export default function AdminDashboard() {
 
         setOpenDestId(d.id)
         setDestDraft({
+            name: d.name || "",
+            country: d.country || "",
+            category: d.category || "",
+            image: d.image || "",
+            bestTime: d.bestTime || "",
+            description: d.description || "",
+            tags: Array.isArray(d.tags) ? d.tags.join(", ") : (d.tags ? String(d.tags) : ""),
             price: d.price ?? 0,
             rating: d.rating ?? 4.5,
             itinerary: Array.isArray(d.itinerary) ? d.itinerary : [],
@@ -280,6 +288,11 @@ export default function AdminDashboard() {
         if (!destDraft) return
         setSavingDestId(id)
         try {
+            const normalizedTags = String(destDraft.tags || "")
+                .split(",")
+                .map((t: string) => t.trim())
+                .filter(Boolean)
+
             const normalizedItinerary = (Array.isArray(destDraft.itinerary) ? destDraft.itinerary : []).map((day: any, idx: number) => {
                 const items = (Array.isArray(day?.items) ? day.items : []).map((it: any) => {
                     const costStr = it?.cost
@@ -300,6 +313,13 @@ export default function AdminDashboard() {
             })
 
             const payload = {
+                name: String(destDraft.name || "").trim(),
+                country: String(destDraft.country || "").trim(),
+                category: String(destDraft.category || "").trim(),
+                image: String(destDraft.image || "").trim(),
+                bestTime: String(destDraft.bestTime || "").trim(),
+                description: String(destDraft.description || ""),
+                tags: normalizedTags,
                 price: Number(destDraft.price) || 0,
                 rating: Number(destDraft.rating) || 0,
                 itinerary: normalizedItinerary,
@@ -725,7 +745,7 @@ export default function AdminDashboard() {
                                                         <span className="w-1 h-1 rounded-full bg-white/20" />
                                                         <span>{d.category}</span>
                                                         <span className="w-1 h-1 rounded-full bg-white/20" />
-                                                        <span>₹{d.price?.toLocaleString?.() ?? d.price}</span>
+                                                        <span>{formatINR(d.price)}</span>
                                                         {d.rating !== undefined && d.rating !== null && (
                                                             <>
                                                                 <span className="w-1 h-1 rounded-full bg-white/20" />
@@ -779,7 +799,7 @@ export default function AdminDashboard() {
                                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                                                             <div>
                                                                 <div className="text-sm font-bold text-white">Edit Destination</div>
-                                                                <div className="text-[11px] text-white/35">Update price/rating and create day-wise itinerary (time + place/activity + cost).</div>
+                                                                <div className="text-[11px] text-white/35">Update location details, price/rating, and a day-wise itinerary (time + place/activity + cost).</div>
                                                             </div>
                                                             <div className="flex items-center gap-2">
                                                                 <button
@@ -796,6 +816,71 @@ export default function AdminDashboard() {
                                                                     Close
                                                                 </button>
                                                             </div>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Name</label>
+                                                                <input
+                                                                    value={destDraft.name || ""}
+                                                                    onChange={(e) => setDestDraft((p: any) => ({ ...p, name: e.target.value }))}
+                                                                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Country</label>
+                                                                <input
+                                                                    value={destDraft.country || ""}
+                                                                    onChange={(e) => setDestDraft((p: any) => ({ ...p, country: e.target.value }))}
+                                                                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Category</label>
+                                                                <input
+                                                                    value={destDraft.category || ""}
+                                                                    onChange={(e) => setDestDraft((p: any) => ({ ...p, category: e.target.value }))}
+                                                                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Image URL</label>
+                                                                <input
+                                                                    value={destDraft.image || ""}
+                                                                    onChange={(e) => setDestDraft((p: any) => ({ ...p, image: e.target.value }))}
+                                                                    placeholder="https://..."
+                                                                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Best Time</label>
+                                                                <input
+                                                                    value={destDraft.bestTime || ""}
+                                                                    onChange={(e) => setDestDraft((p: any) => ({ ...p, bestTime: e.target.value }))}
+                                                                    placeholder="e.g. Jun - Sep"
+                                                                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Tags (comma-separated)</label>
+                                                                <input
+                                                                    value={destDraft.tags || ""}
+                                                                    onChange={(e) => setDestDraft((p: any) => ({ ...p, tags: e.target.value }))}
+                                                                    placeholder="Nature, Trek, Culture"
+                                                                    className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="space-y-1 mb-4">
+                                                            <label className="text-[10px] font-bold uppercase tracking-wider text-white/30">Description</label>
+                                                            <textarea
+                                                                value={destDraft.description || ""}
+                                                                onChange={(e) => setDestDraft((p: any) => ({ ...p, description: e.target.value }))}
+                                                                rows={2}
+                                                                placeholder="A short description of the destination..."
+                                                                className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-white placeholder-white/20 outline-none focus:border-emerald-500/50 resize-none"
+                                                            />
                                                         </div>
 
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
@@ -1232,7 +1317,7 @@ export default function AdminDashboard() {
                                                                             <div className="p-3 rounded-xl border border-white/5 bg-white/2">
                                                                                 <div className="text-[10px] text-white/35 uppercase tracking-wider">Bookings</div>
                                                                                 <div className="text-sm font-bold text-white mt-0.5">{details.summary?.total ?? 0}</div>
-                                                                                <div className="text-[10px] text-white/30 mt-0.5">Total spent: ₹{Number(details.summary?.totalCost || 0).toLocaleString()}</div>
+                                                                                <div className="text-[10px] text-white/30 mt-0.5">Total spent: {formatINR(Number(details.summary?.totalCost || 0))}</div>
                                                                             </div>
                                                                         </div>
 
@@ -1259,7 +1344,7 @@ export default function AdminDashboard() {
                                                                                                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${b.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400' : b.status === 'rejected' ? 'bg-red-500/10 text-red-400' : 'bg-amber-500/10 text-amber-400'}`}>
                                                                                                         {b.status || 'pending'}
                                                                                                     </span>
-                                                                                                    <span className="text-xs font-bold text-emerald-300">₹{Number(b.totalCost || 0).toLocaleString()}</span>
+                                                                                                    <span className="text-xs font-bold text-emerald-300">{formatINR(Number(b.totalCost || 0))}</span>
                                                                                                 </div>
                                                                                             </div>
 
@@ -1325,7 +1410,7 @@ export default function AdminDashboard() {
                                             </div>
                                             <div>
                                                 <p className="text-sm font-semibold text-white/80">{b.destination}</p>
-                                                <p className="text-[11px] text-white/40">{b.userName} · {b.travelers} travelers · ₹{b.totalCost?.toLocaleString()}</p>
+                                                <p className="text-[11px] text-white/40">{b.userName} · {b.travelers} travelers · {formatINR(b.totalCost)}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">

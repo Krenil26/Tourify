@@ -11,6 +11,7 @@ import {
     ShieldCheck, AlertCircle, ChevronRight, Download, Share2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { formatINR } from "@/lib/utils"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 
@@ -372,14 +373,14 @@ export default function BookingPage() {
                                         {breakdown.map((item) => (
                                             <div key={item.label} className="flex justify-between items-center text-sm">
                                                 <span className="text-muted-foreground">{item.label}</span>
-                                                <span className="font-semibold">₹{item.value.toLocaleString()}</span>
+                                                <span className="font-semibold">{formatINR(item.value)}</span>
                                             </div>
                                         ))}
                                         <div className="h-px bg-white/10 my-4" />
                                         <div className="flex justify-between items-center">
                                             <span className="font-bold">Total Amount</span>
                                             <span className="text-xl font-bold ml-1 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-500">
-                                                ₹{totalBillNum.toLocaleString()}
+                                                {formatINR(totalBillNum)}
                                             </span>
                                         </div>
                                     </div>
@@ -397,7 +398,7 @@ export default function BookingPage() {
                                         onClick={handleConfirmBooking}
                                     >
                                         <span className="relative z-10 flex items-center justify-center">
-                                            {paymentState === "processing" ? "Processing Secure Payment..." : isSubmitting ? "Creating Request..." : "Pay ₹" + (totalBillNum).toLocaleString() + " & Request Booking"}
+                                            {paymentState === "processing" ? "Processing Secure Payment..." : isSubmitting ? "Creating Request..." : `Pay ${formatINR(totalBillNum)} & Request Booking`}
                                             {paymentState === "idle" && !isSubmitting && <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />}
                                         </span>
                                         {paymentState === "processing" && (

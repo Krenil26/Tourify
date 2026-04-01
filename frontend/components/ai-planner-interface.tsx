@@ -31,6 +31,7 @@ import {
   ShoppingBag,
 } from "lucide-react"
 import { PlacesAutocomplete } from "@/components/places-autocomplete"
+import { formatINR } from "@/lib/utils"
 
 const travelStyles = [
   { id: "adventure", label: "Adventure", icon: Mountain },
@@ -77,6 +78,56 @@ const sampleItinerary = [
 interface Message {
   role: "user" | "ai"
   content: string
+}
+
+function guessActivityIcon(title: string) {
+  const t = (title || "").toLowerCase()
+  if (/(flight|airport|station|transfer|depart|departure|arrive|arrival)/.test(t)) return Plane
+  if (/(check[- ]?in|hotel|lodge|stay|resort|villa|accommodation)/.test(t)) return Hotel
+  if (/(dinner|lunch|breakfast|food|cuisine|brunch|restaurant|cafe)/.test(t)) return Utensils
+  if (/(shopping|market|souvenir)/.test(t)) return ShoppingBag
+  if (/(temple|monument|museum|fort|palace|heritage|church|mosque)/.test(t)) return Building
+  if (/(trail|trek|hike|camp|campfire|stargazing|adventure)/.test(t)) return Tent
+  return Camera
+}
+
+function toPlannerItinerary(raw: any, startDate?: string, days?: number) {
+  const src = Array.isArray(raw) ? raw : []
+
+  const computeDate = (dayIndex: number) => {
+    if (!startDate) return ""
+    const current = new Date(startDate)
+    if (Number.isNaN(current.getTime())) return ""
+    current.setDate(current.getDate() + dayIndex)
+    return current.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  const mapped = src.map((day: any, idx: number) => {
+    const items = Array.isArray(day?.items) ? day.items : (Array.isArray(day?.activities) ? day.activities : [])
+    const activities = items.map((it: any) => {
+      const title = it?.title ?? it?.activity ?? ""
+      const Icon = it?.icon || guessActivityIcon(title)
+      const costNum = Number(it?.cost)
+      return {
+        time: it?.time || "",
+        activity: title,
+        icon: Icon,
+        cost: Number.isFinite(costNum) ? costNum : 0,
+      }
+    })
+
+    return {
+      day: idx + 1,
+      date: computeDate(idx),
+      title: day?.title || "",
+      activities,
+    }
+  })
+
+  if (typeof days === 'number' && days > 0) {
+    return mapped.slice(0, days)
+  }
+  return mapped
 }
 
 export function AIPlannerInterface() {
@@ -161,8 +212,89 @@ export function AIPlannerInterface() {
     const accommodation = activeDestinationData?.accommodations?.[0]?.name || "Luxury Eco Lodge"
     const rental = activeDestinationData?.rentals?.[0]?.name || "Eco-Friendly SUV"
 
+    const hasAdminItinerary = Array.isArray(activeDestinationData?.itinerary) && activeDestinationData.itinerary.length > 0
+
     const generatedItinerary = []
-    for (let i = 1; i <= diffDays; i++) {
+
+    if (hasAdminItinerary) {
+      const base = toPlannerItinerary(activeDestinationData.itinerary, dates.start, diffDays)
+      for (let i = base.length + 1; i <= diffDays; i++) {
+        const currentDate = dates.start ? new Date(dates.start) : new Date()
+        if (dates.start) currentDate.setDate(currentDate.getDate() + (i - 1))
+        const dateStr = dates.start
+          ? currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          : ""
+
+        const dest = destination || "your destination"
+        let title = ""
+        let activities: any[] = []
+
+        if (i === 1) {
+          title = `Arrival in ${dest}`
+          activities = [
+            { time: "10:00 AM", activity: `Arrive at ${dest} Airport / Station`, icon: Plane, cost: 50 },
+            { time: "12:00 PM", activity: `Check-in at ${accommodation}`, icon: Hotel, cost: 0 },
+            { time: "2:00 PM", activity: `Explore nearby landmarks of ${dest}`, icon: Camera, cost: 0 },
+            { time: "7:00 PM", activity: `Welcome dinner – Local cuisine of ${dest}`, icon: Utensils, cost: 40 },
+          ]
+        } else if (i === diffDays && diffDays > 1) {
+          title = `Farewell & Departure from ${dest}`
+          activities = [
+            { time: "9:00 AM", activity: `Last morning walk around ${dest}`, icon: Camera, cost: 0 },
+            { time: "11:00 AM", activity: `Souvenir shopping at local market`, icon: ShoppingBag, cost: 30 },
+            { time: "1:00 PM", activity: `Farewell brunch`, icon: Utensils, cost: 35 },
+            { time: "4:00 PM", activity: `Transfer to ${dest} Airport / Station – Departure`, icon: Plane, cost: 40 },
+          ]
+        } else {
+          const middleThemes = [
+            {
+              title: `Nature & Scenic Spots in ${dest}`,
+              activities: [
+                { time: "8:00 AM", activity: `Guided nature trail & scenic viewpoints`, icon: Tent, cost: 25 },
+                { time: "12:00 PM", activity: `Lunch at a popular local restaurant`, icon: Utensils, cost: 30 },
+                { time: "2:00 PM", activity: `Visit parks, gardens & natural attractions`, icon: Camera, cost: 15 },
+                { time: "7:00 PM", activity: `Sunset point & dinner`, icon: Utensils, cost: 40 },
+              ],
+            },
+            {
+              title: `Cultural Heritage of ${dest}`,
+              activities: [
+                { time: "9:00 AM", activity: `Visit historical monuments & temples`, icon: Building, cost: 20 },
+                { time: "12:00 PM", activity: `Traditional lunch experience`, icon: Utensils, cost: 25 },
+                { time: "2:00 PM", activity: `Museum & art gallery tour`, icon: Camera, cost: 15 },
+                { time: "7:00 PM", activity: `Cultural show & local dinner`, icon: Utensils, cost: 45 },
+              ],
+            },
+            {
+              title: `Adventure Day in ${dest}`,
+              activities: [
+                { time: "7:00 AM", activity: `Trekking / off-road adventure activity`, icon: Mountain, cost: 50 },
+                { time: "12:00 PM", activity: `Picnic lunch at adventure site`, icon: Utensils, cost: 20 },
+                { time: "3:00 PM", activity: `Water sports / zip-lining / cycling`, icon: Sparkles, cost: 40 },
+                { time: "8:00 PM", activity: `Campfire dinner & stargazing`, icon: Utensils, cost: 35 },
+              ],
+            },
+            {
+              title: `Relaxation & Local Life in ${dest}`,
+              activities: [
+                { time: "10:00 AM", activity: `Spa & wellness retreat`, icon: Sparkles, cost: 60 },
+                { time: "1:00 PM", activity: `Farm-to-table lunch experience`, icon: Utensils, cost: 30 },
+                { time: "3:00 PM", activity: `Local village walk & interaction`, icon: Building, cost: 0 },
+                { time: "7:00 PM", activity: `Rooftop dinner with city views`, icon: Utensils, cost: 50 },
+              ],
+            },
+          ]
+          const theme = middleThemes[(i - 2) % middleThemes.length]
+          title = theme.title
+          activities = theme.activities
+        }
+
+        generatedItinerary.push({ day: i, date: dateStr, title, activities })
+      }
+
+      setCustomItinerary([...base, ...generatedItinerary])
+    } else {
+      for (let i = 1; i <= diffDays; i++) {
       const currentDate = dates.start ? new Date(dates.start) : new Date()
       if (dates.start) currentDate.setDate(currentDate.getDate() + (i - 1))
       const dateStr = dates.start
@@ -229,8 +361,8 @@ export function AIPlannerInterface() {
         activities
       })
     }
-
-    setCustomItinerary(generatedItinerary)
+      setCustomItinerary(generatedItinerary)
+    }
     setMessages((prev) => [
       ...prev,
       {
@@ -437,9 +569,9 @@ export function AIPlannerInterface() {
                       className="w-full"
                     />
                     <div className="flex justify-between mt-2">
-                      <span className="text-sm text-muted-foreground">₹25,000</span>
-                      <span className="text-lg font-bold text-primary">₹{budget[0].toLocaleString('en-IN')}</span>
-                      <span className="text-sm text-muted-foreground">₹5,00,000</span>
+                      <span className="text-sm text-muted-foreground">{formatINR(25000)}</span>
+                      <span className="text-lg font-bold text-primary">{formatINR(budget[0])}</span>
+                      <span className="text-sm text-muted-foreground">{formatINR(500000)}</span>
                     </div>
                   </div>
                 </div>
@@ -596,7 +728,7 @@ export function AIPlannerInterface() {
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      {customItinerary.length} Days • {travelers} Travelers • ₹{budget[0]} Budget
+                      {customItinerary.length} Days • {travelers} Travelers • {formatINR(budget[0])} Budget
                     </p>
                   </div>
                   <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
@@ -609,13 +741,13 @@ export function AIPlannerInterface() {
                   <h4 className="text-sm font-medium text-muted-foreground mb-3">Budget Breakdown</h4>
                   <div className="grid grid-cols-4 gap-2">
                     {[
-                      { label: "Flights", value: "₹45,000", percent: 40 },
-                      { label: "Hotels", value: "₹35,000", percent: 30 },
-                      { label: "Activities", value: "₹15,000", percent: 15 },
-                      { label: "Food", value: "₹15,000", percent: 15 },
+                      { label: "Flights", value: Math.round((budget[0] || 0) * 0.4), percent: 40 },
+                      { label: "Hotels", value: Math.round((budget[0] || 0) * 0.3), percent: 30 },
+                      { label: "Activities", value: Math.round((budget[0] || 0) * 0.15), percent: 15 },
+                      { label: "Food", value: Math.round((budget[0] || 0) * 0.15), percent: 15 },
                     ].map((item, i) => (
                       <div key={i} className="text-center">
-                        <div className="text-lg font-bold text-primary">{item.value}</div>
+                        <div className="text-lg font-bold text-primary">{formatINR(item.value)}</div>
                         <div className="text-xs text-muted-foreground">{item.label}</div>
                         <div className="w-full h-1.5 bg-secondary rounded-full mt-2">
                           <div className="h-full bg-primary rounded-full" style={{ width: `${item.percent}%` }} />
@@ -641,7 +773,7 @@ export function AIPlannerInterface() {
                         </div>
                       </div>
                       <div className="space-y-3">
-                        {day.activities.map((activity: any, actIndex: number) => (
+                        {(Array.isArray(day.activities) ? day.activities : []).map((activity: any, actIndex: number) => (
                           <div key={actIndex} className="flex items-center gap-3 text-sm">
                             <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center shrink-0">
                               <activity.icon className="w-4 h-4 text-muted-foreground" />
@@ -653,7 +785,7 @@ export function AIPlannerInterface() {
                               </div>
                               <p className="text-foreground">{activity.activity}</p>
                             </div>
-                            {activity.cost > 0 && <span className="text-primary font-medium">₹{activity.cost}</span>}
+                            {activity.cost > 0 && <span className="text-primary font-medium">{formatINR(activity.cost)}</span>}
                           </div>
                         ))}
                       </div>
